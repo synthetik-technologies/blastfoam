@@ -54,8 +54,23 @@ Foam::reactingFluidBlastThermo<Thermo>::reactingFluidBlastThermo
             {"odeCombustion", "odeChemistry"},
             false
         )
+    ),
+    Qdot_
+    (
+        IOobject
+        (
+            IOobject::groupName("Qdot", phaseName),
+            mesh.time().name(),
+            mesh,
+            IOobject::NO_READ,
+            IOobject::AUTO_WRITE
+        ),
+        mesh,
+        dimensionedScalar(dimEnergy/dimVolume/dimTime, 0)
     )
-{}
+{
+    this->correctMassFractions();
+}
 
 
 template<class Thermo>
@@ -84,8 +99,23 @@ Foam::reactingFluidBlastThermo<Thermo>::reactingFluidBlastThermo
             {"odeCombustion", "odeChemistry"},
             false
         )
+    ),
+    Qdot_
+    (
+        IOobject
+        (
+            IOobject::groupName("Qdot", phaseName),
+            mesh.time().name(),
+            mesh,
+            IOobject::NO_READ,
+            IOobject::AUTO_WRITE
+        ),
+        mesh,
+        dimensionedScalar(dimEnergy/dimVolume/dimTime, 0)
     )
-{}
+{
+    this->correctMassFractions();
+}
 
 
 // * * * * * * * * * * * * * * * * Destructor  * * * * * * * * * * * * * * * //
@@ -100,16 +130,40 @@ Foam::reactingFluidBlastThermo<Thermo>::~reactingFluidBlastThermo()
 template<class Thermo>
 void Foam::reactingFluidBlastThermo<Thermo>::update()
 {
-    if (this->step() == 1 || odeCombustion_)
+    // Chemistry from the state at the start of the time step (first stage,
+    // step 0), applied in all stages. Not at the initialisation (update()
+    // before the first time step, also with step 0): its sources would be
+    // added to those of the first stage
+    const Time& time = this->mesh().time();
+    if (time.timeIndex() > time.startTimeIndex())
     {
-        combustion_->correct();
-    }
-
-    forAll(this->species_, speciei)
-    {
-        if (this->solveSpecie(speciei))
+        if (this->step() == 0 || odeCombustion_)
         {
-            this->addDelta(this->species_[speciei], combustion_->R(speciei));
+            combustion_->correct();
+        }
+
+        Qdot_ = combustion_->Qdot();
+
+        // The reaction rates are per unit volume of the phase; the species
+        // equations are for alpha*rho*Y (in blastEulerFoam the phase energy
+        // source is alpha*Qdot), so the rates are weighted by the volume
+        // fraction (one for a single phase)
+        const volScalarField alpha
+        (
+            this->alphaRho()
+           /max(this->rho(), dimensionedScalar(dimDensity, small))
+        );
+
+        forAll(this->species_, speciei)
+        {
+            if (this->solveSpecie(speciei))
+            {
+                this->addDelta
+                (
+                    this->species_[speciei],
+                    tmp<volScalarField::Internal>(alpha()*combustion_->R(speciei))
+                );
+            }
         }
     }
     multicomponentFluidBlastThermo<Thermo>::update();
@@ -120,7 +174,7 @@ template<class Thermo>
 Foam::tmp<Foam::volScalarField>
 Foam::reactingFluidBlastThermo<Thermo>::ESource() const
 {
-    return combustion_->Qdot();
+    return Qdot_;
 }
 
 

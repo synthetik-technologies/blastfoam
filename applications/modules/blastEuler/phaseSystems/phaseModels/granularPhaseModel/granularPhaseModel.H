@@ -116,6 +116,16 @@ protected:
         tmp<volScalarField> alphaRhoPTEAdvection_;
 
 
+    // Protected member functions
+
+        //- Cold (compression) energy of the grains: the internal energy at
+        //  the current grain density minus that at the reference density.
+        //  alphaRhoE holds the thermal part alphaRho*(e - eCold), since the
+        //  grain density follows the mixture pressure (decode) and the
+        //  compression work is not part of the transport equation.
+        tmp<volScalarField> eCold();
+
+
 public:
 
     //- Runtime type information
@@ -248,10 +258,10 @@ public:
                 return Theta_;
             }
 
-            //- Return the thermophysical pressure
+            //- Return the granular pressure
             virtual const volScalarField& p() const
             {
-                return fluid_.p();
+                return Ps_;
             }
 
             //- Return non-const access to the thermodynamic pressure

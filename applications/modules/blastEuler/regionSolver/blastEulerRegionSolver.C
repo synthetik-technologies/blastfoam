@@ -173,22 +173,19 @@ Foam::scalar Foam::regionSolvers::blastEuler::CoNum() const
             }
         }
 
-        scalarField sumAmaxSf
+        surfaceScalarField alphaAmaxSf(amaxSf*fvc::interpolate(phases[phasei]));
+
+        scalarField sumAlphaAmaxSf
         (
-            fvc::surfaceSum(amaxSf)().primitiveField()
+            fvc::surfaceSum(alphaAmaxSf)().primitiveField()
         );
 
-
-        sumPhi +=
-            fvc::surfaceSum
-            (
-                amaxSf*fvc::interpolate(phases[phasei])
-            )().primitiveField();
+        sumPhi += sumAlphaAmaxSf;
 
         phaseCoNums[phasei] =
-            0.5*gMax(sumAmaxSf/V)*mesh_.time().deltaTValue();
+            0.5*gMax(sumAlphaAmaxSf/V)*mesh_.time().deltaTValue();
         meanPhaseCoNums[phasei] =
-            0.5*(gSum(amaxSf)/gSum(V))*mesh_.time().deltaTValue();
+            0.5*(gSum(sumAlphaAmaxSf)/gSum(V))*mesh_.time().deltaTValue();
     }
 
     scalar maxCoNum = 0.5*gMax(sumPhi/V)*mesh_.time().deltaTValue();

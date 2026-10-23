@@ -1,0 +1,73 @@
+/*--------------------------------*- C++ -*----------------------------------*\
+  =========                 |
+  \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox
+   \\    /   O peration     | Website:  https://openfoam.org
+    \\  /    A nd           | Version:  12
+     \\/     M anipulation  |
+\*---------------------------------------------------------------------------*/
+FoamFile
+{
+    version     2.0;
+    format      ascii;
+    class       dictionary;
+    location    "system";
+    object      controlDict;
+}
+// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
+
+application     blastEulerFoam;
+
+startFrom       startTime;
+
+startTime       0;
+
+stopAt          endTime;
+
+endTime         5e-06;
+
+writeControl    adjustableRunTime;
+
+writeInterval   1e-06;
+
+writeFormat     ascii;
+
+writePrecision  12;
+
+writeCompression off;
+
+timeFormat      general;
+
+timePrecision   6;
+
+runTimeModifiable true;
+
+adjustTimeStep  yes;
+
+deltaT          1e-9;
+
+maxCo           0.2;
+
+// ************************************************************************* //
+
+functions
+{
+    totalMass
+    {
+        type            volFieldValue;
+        libs            (fieldFunctionObjects);
+        select          all;
+        operation       volIntegrate;
+        fields          (alphaRho.compBAl alphaRho.Al alphaRho.gas);
+        writeFields     false;
+        writeControl    timeStep;
+        writeInterval   1;
+        log             false;
+    }
+    totalEnergy
+    {
+        $totalMass;
+        fields          (alphaRhoE.compBAl alphaRhoE.Al alphaRhoE.gas);
+    }
+}
+
+// ************************************************************************* //

@@ -242,6 +242,45 @@ public:
         //- Calculate the speed of sound
         virtual tmp<volScalarField> calcSpeedOfSound() const;
 
+        //- Return temperature [K]
+        virtual const volScalarField& T() const { return Thermo::T(); }
+
+        //- Return temperature [K]
+        virtual volScalarField& T() { return const_cast<volScalarField&>(Thermo::T()); }
+
+        //- Return density [kg/m^3]
+        virtual tmp<volScalarField> rho() const { return Thermo::rho(); }
+
+        //- Return internal energy/enthalpy [J/kg]
+        virtual const volScalarField& he() const { return Thermo::he(); }
+
+        //- Return internal energy/enthalpy [J/kg]
+        virtual volScalarField& he() { return const_cast<volScalarField&>(Thermo::he()); }
+
+        //- Return heat capacity at constant pressure [J/kg/K]
+        virtual const volScalarField& CpRef() const { return Thermo::CpRef(); }
+
+        //- Return heat capacity at constant pressure [J/kg/K]
+        virtual volScalarField& CpRef() { return Thermo::CpRef(); }
+
+        //- Return heat capacity at constant volume [J/kg/K]
+        virtual const volScalarField& CvRef() const { return Thermo::CvRef(); }
+
+        //- Return heat capacity at constant volume [J/kg/K]
+        virtual volScalarField& CvRef() { return Thermo::CvRef(); }
+
+        //- Return thermal conductivity [W/m/K]
+        virtual const volScalarField& kappaRef() const { return Thermo::kappaRef(); }
+
+        //- Return thermal conductivity [W/m/K]
+        virtual volScalarField& kappaRef() { return Thermo::kappaRef(); }
+
+        //- basicThermo implementation
+        virtual const volScalarField& Cp() const { return this->CpRef(); }
+        virtual const volScalarField& Cv() const { return this->CvRef(); }
+        virtual const volScalarField& Cpv() const { return this->CvRef(); }
+        virtual const volScalarField& kappa() const { return this->kappaRef(); }
+
         //- Does the mixture include this specie?
         inline bool containsSpecie(const word& specieName) const
         {

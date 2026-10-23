@@ -1,0 +1,100 @@
+/*--------------------------------*- C++ -*----------------------------------*\
+  =========                 |
+  \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox
+   \\    /   O peration     | Website:  https://openfoam.org
+    \\  /    A nd           | Version:  12
+     \\/     M anipulation  |
+\*---------------------------------------------------------------------------*/
+FoamFile
+{
+    version     2.0;
+    format      ascii;
+    class       dictionary;
+    object      blockMeshDict;
+}
+// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
+// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
+
+// Axisymmetric (axis y) 5-degree wedge of the quarter plane x, y in [0, R]
+// with a symmetry plane at y = 0: the spherical charge of
+// tests/1D_spherical/ChargeCompBAl_1D_spherical in 2D. Base cells of 2 mm,
+// refined by AMR (constant/dynamicMeshDict) to the 0.5 mm of the 1D case.
+
+convertToMeters 1;
+
+R       0.2;
+n       100;
+
+x       #calc "$R*cos(2.5*Foam::constant::mathematical::pi/180.0)";
+z       #calc "$R*sin(2.5*Foam::constant::mathematical::pi/180.0)";
+nz      #neg  $z;
+
+vertices
+(
+    (0  0  0)
+    ($x 0  $nz)
+    ($x $R $nz)
+    (0  $R 0)
+    ($x 0  $z)
+    ($x $R $z)
+);
+
+blocks
+(
+    hex (0 1 2 3 0 4 5 3) ($n $n 1) simpleGrading (1 1 1)
+);
+
+edges
+(
+);
+
+boundary
+(
+    symmetry
+    {
+        type symmetryPlane;
+        faces
+        (
+            (0 1 4 0)
+        );
+    }
+    outlet
+    {
+        type patch;
+        faces
+        (
+            (1 2 5 4)
+            (3 5 2 3)
+        );
+    }
+    wedge0
+    {
+        type wedge;
+        faces
+        (
+            (0 3 2 1)
+        );
+    }
+    wedge1
+    {
+        type wedge;
+        faces
+        (
+            (0 4 5 3)
+        );
+    }
+    // Exposed internal faces during load balancing (redistributor)
+    internal
+    {
+        type internal;
+        faces
+        (
+        );
+    }
+);
+
+mergePatchPairs
+(
+);
+
+// ************************************************************************* //

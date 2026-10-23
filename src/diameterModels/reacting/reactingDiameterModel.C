@@ -25,6 +25,7 @@ License
 
 #include "reactingDiameterModel.H"
 #include "fvc.H"
+#include "zeroGradientFvPatchFields.H"
 #include "addToRunTimeSelectionTable.H"
 
 // * * * * * * * * * * * * * * Static Data Members * * * * * * * * * * * * * //
@@ -52,6 +53,20 @@ Foam::diameterModels::reactingDiameterModel::reactingDiameterModel
     rate_(diameterReactionRate::New(*this, dict)),
     pName_(dict.lookupOrDefault("pName", word("p"))),
     TName_(dict.lookupOrDefault("TName", IOobject::groupName("T", phaseName))),
+    oxidiserPhase_(dict.lookupOrDefault("oxidiserPhase", word::null)),
+    oxidiserSpecies_
+    (
+        dict.lookupOrDefault("oxidiserSpecies", wordList())
+    ),
+    YoxidiserRef_
+    (
+        oxidiserSpecies_.size()
+      ? dict.lookup<scalar>("YoxidiserRef")
+      : 1.0
+    ),
+    alphaMin_(dict.lookupOrDefault<scalar>("alphaMin", 1e-4)),
+    ignitedFraction_(dict.lookupOrDefault<bool>("ignitedFraction", false)),
+    Tign_(ignitedFraction_ ? dict.lookup<scalar>("Tign") : great),
     N_
     (
         IOobject
@@ -65,6 +80,18 @@ Foam::diameterModels::reactingDiameterModel::reactingDiameterModel
         mesh,
         dimensionedScalar("0", inv(dimVolume), 1.0)
     ),
+    d0_
+    (
+        IOobject
+        (
+            IOobject::groupName("d0", phaseName),
+            mesh.time().name(),
+            mesh,
+            IOobject::READ_IF_PRESENT,
+            IOobject::AUTO_WRITE
+        ),
+        this->d_
+    ),
     dVdt_
     (
         IOobject
@@ -75,6 +102,20 @@ Foam::diameterModels::reactingDiameterModel::reactingDiameterModel
         ),
         mesh,
         dimensionedScalar("0", dimVolume/dimTime, 0.0)
+    ),
+    ignited_
+    (
+        IOobject
+        (
+            IOobject::groupName("ignited", phaseName),
+            mesh.time().name(),
+            mesh,
+            IOobject::READ_IF_PRESENT,
+            ignitedFraction_ ? IOobject::AUTO_WRITE : IOobject::NO_WRITE
+        ),
+        mesh,
+        dimensionedScalar(dimless, 0),
+        zeroGradientFvPatchScalarField::typeName
     )
 {
     this->requireD();
@@ -87,6 +128,64 @@ Foam::diameterModels::reactingDiameterModel::~reactingDiameterModel()
 {}
 
 
+// * * * * * * * * * * * * Private Member Functions  * * * * * * * * * * * //
+
+Foam::tmp<Foam::volScalarField>
+Foam::diameterModels::reactingDiameterModel::oxidiserFactor() const
+{
+    const fvMesh& mesh = this->d_.mesh();
+    const volScalarField& alpha =
+        mesh.lookupObject<volScalarField>
+        (
+            IOobject::groupName("alpha", this->d_.group())
+        );
+    const volScalarField& alphaOx =
+        mesh.lookupObject<volScalarField>
+        (
+            IOobject::groupName("alpha", oxidiserPhase_)
+        );
+
+    // Fraction of the fluid around the particles that carries the oxidiser
+    tmp<volScalarField> tf
+    (
+        volScalarField::New
+        (
+            IOobject::groupName("oxidiserFactor", this->d_.group()),
+            min
+            (
+                max(alphaOx, scalar(0))
+               /max(1.0 - alpha, dimensionedScalar(dimless, small)),
+                scalar(1)
+            )
+        )
+    );
+
+    if (oxidiserSpecies_.size())
+    {
+        volScalarField Yox
+        (
+            volScalarField::New
+            (
+                "Yoxidiser",
+                mesh,
+                dimensionedScalar(dimless, 0)
+            )
+        );
+        forAll(oxidiserSpecies_, i)
+        {
+            Yox +=
+                mesh.lookupObject<volScalarField>
+                (
+                    IOobject::groupName(oxidiserSpecies_[i], oxidiserPhase_)
+                );
+        }
+        tf.ref() *= min(max(Yox, scalar(0))/YoxidiserRef_, scalar(1));
+    }
+
+    return tf;
+}
+
+
 // * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
 
 void Foam::diameterModels::reactingDiameterModel::update()
@@ -97,9 +196,33 @@ void Foam::diameterModels::reactingDiameterModel::update()
             IOobject::groupName("alpha", this->d_.group())
         );
 
+    forAll(this->d_, celli)
+    {
+        if (alpha[celli] <= alphaMin_)
+        {
+            this->d_[celli] = d0_[celli];
+        }
+        else
+        {
+            this->d_[celli] = Foam::max(1e-10, Foam::min(this->d_[celli], d0_[celli]));
+        }
+    }
+    this->d_.correctBoundaryConditions();
+
+    const dimensionedScalar piBy6
+    (
+        "piBy6",
+        dimless,
+        constant::mathematical::pi/6.0
+    );
+    // Number density from the current diameter: the volume fraction
+    // shrinks with the particles as they burn, so N = alpha/V(d0) would
+    // make the mass loss dm/dt = m (dV/dt)/V0 (exponential, leaving 1/e of
+    // the mass when d -> 0). The floor must be far below the volume of a
+    // micron particle (5e-19 m^3), not small = 1e-15 m^3.
     N_ =
         alpha
-       /max(this->V(), dimensionedScalar(dimVolume, small));
+       /max(piBy6*pow3(this->d_), dimensionedScalar(dimVolume, vSmall));
 }
 
 
@@ -123,6 +246,12 @@ void Foam::diameterModels::reactingDiameterModel::solve
     const volScalarField& T
 )
 {
+    const volScalarField& alpha =
+        this->d_.mesh().lookupObject<volScalarField>
+        (
+            IOobject::groupName("alpha", this->d_.group())
+        );
+
     volScalarField VOld
     (
         IOobject::groupName("V", this->d_.group()),
@@ -133,14 +262,76 @@ void Foam::diameterModels::reactingDiameterModel::solve
     const volScalarField dOld(this->d_);
     this->storeAndBlendOld(this->d_);
 
-    volScalarField dDdt(-2.0*rate_->dDdt(pi, T));
-    this->blendDelta(dDdt);
-
+    const surfaceScalarField& phi
+    (
+        this->d_.mesh().lookupObject<surfaceScalarField>
+        (
+            IOobject::groupName("phi", this->d_.group())
+        )
+    );
     const dimensionedScalar& dT(this->d_.time().deltaT());
+
+    if (ignitedFraction_)
+    {
+        // Transport of the ignited fraction with the particles (as d), then
+        // ignition where the particles have reached Tign
+        const volScalarField ignitedOld(ignited_);
+        this->storeAndBlendOld(ignited_);
+        volScalarField deltaPhiIgn
+        (
+            fvc::div
+            (
+                phi,
+                ignited_,
+                "div(" + phi.name() + ',' + this->d_.name() + ')'
+            )
+          - ignited_*fvc::div(phi)
+        );
+        this->storeAndBlendDelta(deltaPhiIgn);
+        ignited_ = ignitedOld - dT*deltaPhiIgn;
+        forAll(ignited_, celli)
+        {
+            if (alpha[celli] <= alphaMin_)
+            {
+                ignited_[celli] = 0;
+            }
+            else if (T[celli] >= Tign_)
+            {
+                ignited_[celli] = 1;
+            }
+            else
+            {
+                ignited_[celli] = Foam::min(Foam::max(ignited_[celli], 0.0), 1.0);
+            }
+        }
+        ignited_.correctBoundaryConditions();
+    }
+
+    volScalarField dDdt(-2.0*rate_->dDdt(pi, T));
+    if (!oxidiserPhase_.empty())
+    {
+        dDdt *= oxidiserFactor();
+    }
+    if (ignitedFraction_)
+    {
+        dDdt *= ignited_;
+    }
+    this->blendDelta(dDdt);
 
     //- Change dRdt to dDdt
     this->d_ += dT*dDdt;
-    this->d_.max(1e-10);
+    forAll(this->d_, celli)
+    {
+        if (alpha[celli] <= alphaMin_)
+        {
+            this->d_[celli] = d0_[celli];
+        }
+        else
+        {
+            this->d_[celli] = Foam::max(1e-10, Foam::min(this->d_[celli], d0_[celli]));
+        }
+    }
+    this->d_.correctBoundaryConditions();
 
     dVdt_ = (this->V() - VOld)/dT;
     dDdt = (this->d_ - dOld)/dT;
@@ -149,18 +340,29 @@ void Foam::diameterModels::reactingDiameterModel::solve
     dDdt = this->calcAndStoreDelta(dDdt);
     dVdt_ = this->calcAndStoreDelta(dVdt_);
 
-    const surfaceScalarField& phi
-    (
-        this->d_.mesh().lookupObject<surfaceScalarField>
-        (
-            IOobject::groupName("phi", this->d_.group())
-        )
-    );
-
     volScalarField deltaPhid(fvc::div(phi, d_) - d_*fvc::div(phi));
     this->storeAndBlendDelta(deltaPhid);
     this->d_ = dOld - dT*(deltaPhid - dDdt);
-    this->d_.max(1e-10);
+    forAll(this->d_, celli)
+    {
+        if (alpha[celli] <= alphaMin_)
+        {
+            this->d_[celli] = d0_[celli];
+        }
+        else
+        {
+            this->d_[celli] = Foam::max(1e-10, Foam::min(this->d_[celli], dOld[celli]));
+        }
+    }
+    this->d_.correctBoundaryConditions();
+
+    dVdt_ = (this->V() - VOld)/dT;
+    dVdt_.min(0.0);
+    dDdt = (this->d_ - dOld)/dT;
+    dDdt.min(0.0);
+
+    dDdt = this->calcAndStoreDelta(dDdt);
+    dVdt_ = this->calcAndStoreDelta(dVdt_);
 }
 
 

@@ -1,0 +1,61 @@
+/*--------------------------------*- C++ -*----------------------------------*\
+  =========                 |
+  \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox
+   \\    /   O peration     | Website:  https://openfoam.org
+    \\  /    A nd           | Version:  12
+     \\/     M anipulation  |
+\*---------------------------------------------------------------------------*/
+FoamFile
+{
+    format      ascii;
+    class       dictionary;
+    location    "constant";
+    object      physicalProperties.compBAl;
+}
+// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
+
+// Detonation products only (eJWLC): the transfer test starts from the
+// fully reacted 100 bar freeze-out state, so no reactants/activation.
+type            basic;
+
+thermoType
+{
+    transport       const;
+    thermo          eConst;
+    equationOfState eJWLC;
+}
+equationOfState
+{
+    rho0            1624.45;
+    A               224.943e9;
+    B               2.77303e9;
+    C               1.47024e9;
+    R1              3.456;
+    R2              0.813403;
+    omega           0.302717;
+    pMax            1e11;
+    Cv              1450;
+    T_CJ            3844.39;
+    rho_CJ          2150.55;
+    omegaT          0.371065; // T_s through T_CJ and the gas-EOS T at transfer
+    E0              -503470.78;
+}
+specie
+{
+    molWeight       24.02;
+}
+transport
+{
+    mu              1e-04;
+    Pr              0.7;
+}
+thermodynamics
+{
+    Cv              1450;
+    Hf              0;
+}
+
+residualRho     1e-06;
+residualAlpha   1e-06;
+
+// ************************************************************************* //

@@ -1,0 +1,14 @@
+#!/bin/sh
+cd "${0%/*}" || exit
+. "${WM_PROJECT_DIR:?}"/bin/tools/RunFunctions
+
+# Usage: Allrun <d0> <p> <T> <alpha> <deltaT> <endTime>
+python3 $BLAST_DIR/utilities/thermo_fitter/nasa9_species.py \
+    --base $BLAST_DIR/tests/1D_spherical/ChargeCompBAl_1D_spherical_reacting/constant/thermo.compressibleGas \
+    --species O2 N2 Al -o constant/thermo.nasa9Gas > log.nasa9_species 2>&1
+
+python3 setup_case.py --d "$1" --p "$2" --T "$3" --alpha "$4" \
+    --deltaT "$5" --endTime "$6" > log.setup_case 2>&1
+
+runApplication blockMesh
+runApplication $(getApplication)

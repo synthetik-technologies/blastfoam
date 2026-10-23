@@ -100,7 +100,7 @@ bool Foam::activationModel::detonationPoint::check
     const volScalarField& alphaRho
 )
 {
-    if (activated_)
+    if (activated_ || delay_ > alphaRho.mesh().time().value())
     {
         return true;
     }
@@ -688,12 +688,22 @@ void Foam::activationModel::solve()
 
 Foam::tmp<Foam::volScalarField> Foam::activationModel::initESource() const
 {
+    // On a restart the energy is initialised from the pressure of the
+    // reacted material, which already contains the detonation energy
+    if (lambda_.time().restart())
+    {
+        return volScalarField::New
+        (
+            "initESource",
+            lambda_.mesh(),
+            dimensionedScalar(e0_.dimensions(), 0.0)
+        );
+    }
+
     return volScalarField::New
     (
         "initESource",
         lambda_*e0_
-        // lambda_.mesh(),
-        // dimensionedScalar("0", e0_.dimensions(), 0.0)
     );
 }
 

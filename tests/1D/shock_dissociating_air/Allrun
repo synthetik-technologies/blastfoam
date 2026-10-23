@@ -1,0 +1,21 @@
+#!/bin/sh
+cd ${0%/*} || exit 1
+
+if [ -z "$WM_PROJECT_DIR" ]; then
+    . /opt/OpenFOAM/OpenFOAM-12/etc/bashrc
+    . /opt/OpenFOAM/blastfoam/etc/bashrc
+fi
+
+. $WM_PROJECT_DIR/bin/tools/RunFunctions
+
+./Allclean
+
+cp -r 0_orig 0
+
+python3 $BLAST_DIR/utilities/thermo_fitter/nasa9_species.py \
+    --base $BLAST_DIR/tests/1D_spherical/ChargeCompBAl_1D_spherical_reacting/constant/thermo.compressibleGas \
+    --species N2 O2 NO N O -o constant/thermo.nasa9Air > log.nasa9_species 2>&1
+
+runApplication blockMesh
+runApplication setFields
+runApplication $(getApplication)

@@ -104,6 +104,18 @@ public:
             const volScalarField& p,
             const volScalarField& T
         ) const = 0;
+
+        //- Species of the surrounding phase that the burning produces or
+        //  consumes (empty if the rate does not define its products)
+        virtual wordList productSpecies() const
+        {
+            return wordList();
+        }
+
+        //- Mass of a species produced (positive) or consumed (negative)
+        //  per unit mass of particle material burnt; the yields of all
+        //  product species sum to one
+        virtual tmp<volScalarField> productYield(const word& name) const;
 };
 
 

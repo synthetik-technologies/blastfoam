@@ -1,0 +1,1212 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE article PUBLIC "-//NLM//DTD JATS (Z39.96) Journal Publishing DTD v1.3 20210610//EN" "JATS-journalpublishing1-3.dtd">
+<article xmlns:mml="http://www.w3.org/1998/Math/MathML" xmlns:xlink="http://www.w3.org/1999/xlink" article-type="research-article" dtd-version="1.3" xml:lang="en">
+  <front>
+    <journal-meta>
+      <journal-id journal-id-type="publisher-id">fire</journal-id>
+      <journal-title-group>
+        <journal-title>Fire</journal-title>
+        <abbrev-journal-title abbrev-type="publisher">Fire</abbrev-journal-title>
+        <abbrev-journal-title abbrev-type="pubmed">Fire</abbrev-journal-title>
+      </journal-title-group>
+      <issn pub-type="epub">2571-6255</issn>
+      <publisher>
+        <publisher-name>MDPI</publisher-name>
+      </publisher>
+    </journal-meta>
+    <article-meta>
+      <article-id pub-id-type="doi">10.3390/fire6110435</article-id>
+      <article-id pub-id-type="publisher-id">fire-06-00435</article-id>
+      <article-categories>
+        <subj-group>
+          <subject>Article</subject>
+        </subj-group>
+      </article-categories>
+      <title-group>
+        <article-title>Shock Tube Study of Ignition Delay Times for Hydrogen&#x2013;Oxygen Mixtures</article-title>
+      </title-group>
+      <contrib-group>
+        <contrib contrib-type="author">
+          <name>
+            <surname>Pavlov</surname>
+            <given-names>Valery</given-names>
+          </name>
+          <role vocab="credit" vocab-identifier="https://credit.niso.org/" vocab-term="Methodology" vocab-term-identifier="https://credit.niso.org/contributor-roles/methodology/">Methodology</role>
+          <role vocab="credit" vocab-identifier="https://credit.niso.org/" vocab-term="Validation" vocab-term-identifier="https://credit.niso.org/contributor-roles/validation/">Validation</role>
+        </contrib>
+        <contrib contrib-type="author">
+          <name>
+            <surname>Gerasimov</surname>
+            <given-names>Gennady</given-names>
+          </name>
+          <role vocab="credit" vocab-identifier="https://credit.niso.org/" vocab-term="Conceptualization" vocab-term-identifier="https://credit.niso.org/contributor-roles/conceptualization/">Conceptualization</role>
+          <role vocab="credit" vocab-identifier="https://credit.niso.org/" vocab-term="Validation" vocab-term-identifier="https://credit.niso.org/contributor-roles/validation/">Validation</role>
+          <role vocab="credit" vocab-identifier="https://credit.niso.org/" vocab-term="Data curation" vocab-term-identifier="https://credit.niso.org/contributor-roles/data-curation/">Data curation</role>
+          <role vocab="credit" vocab-identifier="https://credit.niso.org/" vocab-term="Writing &#x2013; review &amp; editing" vocab-term-identifier="https://credit.niso.org/contributor-roles/writing-review-editing/">Writing &#x2013; review &amp; editing</role>
+          <role vocab="credit" vocab-identifier="https://credit.niso.org/" vocab-term="Supervision" vocab-term-identifier="https://credit.niso.org/contributor-roles/supervision/">Supervision</role>
+        </contrib>
+        <contrib contrib-type="author">
+          <name>
+            <surname>Levashov</surname>
+            <given-names>Vladimir</given-names>
+          </name>
+          <role vocab="credit" vocab-identifier="https://credit.niso.org/" vocab-term="Conceptualization" vocab-term-identifier="https://credit.niso.org/contributor-roles/conceptualization/">Conceptualization</role>
+          <role vocab="credit" vocab-identifier="https://credit.niso.org/" vocab-term="Software" vocab-term-identifier="https://credit.niso.org/contributor-roles/software/">Software</role>
+          <role vocab="credit" vocab-identifier="https://credit.niso.org/" vocab-term="Formal analysis" vocab-term-identifier="https://credit.niso.org/contributor-roles/formal-analysis/">Formal analysis</role>
+          <role vocab="credit" vocab-identifier="https://credit.niso.org/" vocab-term="Resources" vocab-term-identifier="https://credit.niso.org/contributor-roles/resources/">Resources</role>
+          <role vocab="credit" vocab-identifier="https://credit.niso.org/" vocab-term="Writing &#x2013; original draft" vocab-term-identifier="https://credit.niso.org/contributor-roles/writing-original-draft/">Writing &#x2013; original draft</role>
+          <role vocab="credit" vocab-identifier="https://credit.niso.org/" vocab-term="Visualization" vocab-term-identifier="https://credit.niso.org/contributor-roles/visualization/">Visualization</role>
+          <role vocab="credit" vocab-identifier="https://credit.niso.org/" vocab-term="Project administration" vocab-term-identifier="https://credit.niso.org/contributor-roles/project-administration/">Project administration</role>
+          <role vocab="credit" vocab-identifier="https://credit.niso.org/" vocab-term="Funding acquisition" vocab-term-identifier="https://credit.niso.org/contributor-roles/funding-acquisition/">Funding acquisition</role>
+          <xref rid="c1-fire-06-00435" ref-type="corresp">*</xref>
+        </contrib>
+        <contrib contrib-type="author">
+          <contrib-id contrib-id-type="orcid" authenticated="true">https://orcid.org/0000-0002-5612-3240</contrib-id>
+          <name>
+            <surname>Kozlov</surname>
+            <given-names>Pavel</given-names>
+          </name>
+          <role vocab="credit" vocab-identifier="https://credit.niso.org/" vocab-term="Validation" vocab-term-identifier="https://credit.niso.org/contributor-roles/validation/">Validation</role>
+          <role vocab="credit" vocab-identifier="https://credit.niso.org/" vocab-term="Investigation" vocab-term-identifier="https://credit.niso.org/contributor-roles/investigation/">Investigation</role>
+        </contrib>
+        <contrib contrib-type="author">
+          <name>
+            <surname>Zabelinsky</surname>
+            <given-names>Igor</given-names>
+          </name>
+          <role vocab="credit" vocab-identifier="https://credit.niso.org/" vocab-term="Validation" vocab-term-identifier="https://credit.niso.org/contributor-roles/validation/">Validation</role>
+          <role vocab="credit" vocab-identifier="https://credit.niso.org/" vocab-term="Investigation" vocab-term-identifier="https://credit.niso.org/contributor-roles/investigation/">Investigation</role>
+        </contrib>
+        <contrib contrib-type="author">
+          <name>
+            <surname>Bykova</surname>
+            <given-names>Natalia</given-names>
+          </name>
+          <role vocab="credit" vocab-identifier="https://credit.niso.org/" vocab-term="Software" vocab-term-identifier="https://credit.niso.org/contributor-roles/software/">Software</role>
+        </contrib>
+      </contrib-group>
+      <contrib-group>
+        <contrib contrib-type="editor">
+          <name>
+            <surname>Kiverin</surname>
+            <given-names>Alexey D.</given-names>
+          </name>
+          <role>Academic Editor</role>
+        </contrib>
+        <contrib contrib-type="editor">
+          <name>
+            <surname>Krivosheyev</surname>
+            <given-names>Pavel N.</given-names>
+          </name>
+          <role>Academic Editor</role>
+        </contrib>
+      </contrib-group>
+      <aff id="af1-fire-06-00435">Institute of Mechanics, Lomonosov Moscow State University, 119992 Moscow, Russia<email>gerasimov@imec.msu.ru</email> (G.G.); <email>kozlov@imec.msu.ru</email> (P.K.); </aff>
+      <author-notes>
+        <corresp id="c1-fire-06-00435"><label>*</label>Correspondence: <email>vyl69@mail.ru</email></corresp>
+      </author-notes>
+      <pub-date pub-type="epub">
+        <day>11</day>
+        <month>11</month>
+        <year>2023</year>
+      </pub-date>
+      <pub-date pub-type="collection">
+        <month>11</month>
+        <year>2023</year>
+      </pub-date>
+      <volume>6</volume>
+      <issue>11</issue>
+      <elocation-id>435</elocation-id>
+      <history>
+        <date date-type="received">
+          <day>29</day>
+          <month>09</month>
+          <year>2023</year>
+        </date>
+        <date date-type="rev-recd">
+          <day>26</day>
+          <month>10</month>
+          <year>2023</year>
+        </date>
+        <date date-type="accepted">
+          <day>09</day>
+          <month>11</month>
+          <year>2023</year>
+        </date>
+      </history>
+      <permissions>
+        <copyright-statement>&#xA9; 2023 by the authors.</copyright-statement>
+        <copyright-year>2023</copyright-year>
+        <license license-type="open-access">
+          <license-p>Licensee MDPI, Basel, Switzerland. This article is an open access article distributed under the terms and conditions of the Creative Commons Attribution (CC BY) license (<ext-link ext-link-type="uri" xlink:href="https://creativecommons.org/licenses/by/4.0/">https://creativecommons.org/licenses/by/4.0/</ext-link>).</license-p>
+        </license>
+      </permissions>
+      <abstract>
+        <p>This paper presents the results of measurements of ignition delay times in hydrogen&#x2013;oxygen mixtures highly diluted with argon. The experiments were carried out behind an incident shock wave at temperatures from 870 to 2500 K, pressures from 0.5 to 1.5 atm, and equivalence ratios from 0.1 to 2.0. The results obtained were processed in terms of the partial pressure of the combustible mixture stoichiometric part that is consumed in the combustion process. An almost linear dependence of the ignition delay time on the reciprocal value of the partial pressure was found for both rich and lean mixtures. The measured data are compared with calculations based on the previously developed kinetic model and experimental data from other authors.</p>
+      </abstract>
+      <kwd-group>
+        <kwd>hydrogen&#x2013;oxygen mixture</kwd>
+        <kwd>combustion</kwd>
+        <kwd>shock tube</kwd>
+        <kwd>ignition delay time</kwd>
+        <kwd>incident shock wave</kwd>
+      </kwd-group>
+      <funding-group>
+        <funding-statement>This research received no external funding.</funding-statement>
+      </funding-group>
+    </article-meta>
+  </front>
+  <body>
+    <sec id="sec1-fire-06-00435" sec-type="intro">
+      <title>1. Introduction</title>
+      <p>Hydrogen plays an important role among gaseous fuels and is the most efficient and pollution-free type of fuel [<xref ref-type="bibr" rid="B1-fire-06-00435">1</xref>]. Hydrogen power engineering is currently considered one of the most promising industries, including road transport, aviation, and various domestic energy needs [<xref ref-type="bibr" rid="B2-fire-06-00435">2</xref>]. On the other hand, the chemistry of hydrogen combustion is an integral part of various kinetic mechanisms of hydrocarbon combustion at all stages of the oxidation process, which makes it the subject of further research [<xref ref-type="bibr" rid="B3-fire-06-00435">3</xref>].</p>
+      <p>Despite the large number of works previously performed by various authors, studies on the combustion of hydrogen and its mixtures with other types of fuel are currently continued. In particular, numerical analysis of various scenarios of the ignition in the intermediate temperature region and their influence on the induction time is given by Kiverin et al. [<xref ref-type="bibr" rid="B4-fire-06-00435">4</xref>]. Explosive characteristics of inhomogeneous hydrogen&#x2013;air mixtures with turbulent mixing were analyzed in experiments on measuring ignition delay times at various equivalence factors [<xref ref-type="bibr" rid="B5-fire-06-00435">5</xref>]. Lyu et al. [<xref ref-type="bibr" rid="B6-fire-06-00435">6</xref>] evaluated the effectiveness of the pressure ratio equivalent method in experiments that analyze hydrogen leakage ignition applied to the problem of hydrogen storage and transportation. B&#xF6;ttler et al. [<xref ref-type="bibr" rid="B7-fire-06-00435">7</xref>] developed a novel model based on the flamelet approach, which was used to study the ignition of premixed H<sub>2</sub>/Air mixtures under stoichiometric conditions. Villenave et al. [<xref ref-type="bibr" rid="B8-fire-06-00435">8</xref>] presented the results of an experimental study of the lean H<sub>2</sub>/Air mixture ignition in a rapid compression machine at low temperatures and high pressures, which are essential under conditions of fuel combustion in an internal combustion engine. In connection with the ongoing work on the creation of a pulse detonation engine, studies are carried out to determine the characteristics of supersonic hydrogen&#x2013;air flows in the combustion chamber of such engines [<xref ref-type="bibr" rid="B9-fire-06-00435">9</xref>].</p>
+      <p>The ignition delay time is the essential parameter that describes the combustion process. This parameter in the high-temperature range (<italic>T</italic> &#x2265; 1000 K) is measured in experiments on shock tubes [<xref ref-type="bibr" rid="B10-fire-06-00435">10</xref>]. It should be noted that the bulk of research to determine the ignition delay time was carried out on shock tubes in the regime behind the reflected shock wave [<xref ref-type="bibr" rid="B11-fire-06-00435">11</xref>,<xref ref-type="bibr" rid="B12-fire-06-00435">12</xref>,<xref ref-type="bibr" rid="B13-fire-06-00435">13</xref>,<xref ref-type="bibr" rid="B14-fire-06-00435">14</xref>,<xref ref-type="bibr" rid="B15-fire-06-00435">15</xref>,<xref ref-type="bibr" rid="B16-fire-06-00435">16</xref>]. The determination of this characteristic of the ignition process for a hydrogen&#x2013;oxygen mixture in experiments behind the incident shock wave was carried out by Pavlov and Shatalov [<xref ref-type="bibr" rid="B17-fire-06-00435">17</xref>]. In this work, a series of additional measurements were carried out, which makes it possible to expand the existing database of experimental data and to improve process understanding. </p>
+    </sec>
+    <sec id="sec2-fire-06-00435">
+      <title>2. Experimental Procedure</title>
+      <p>The experimental study of the ignition process in the H<sub>2</sub>/O<sub>2</sub> mixture diluted with Ar was carried out on a single-diaphragm shock tube with an internal diameter of 57 mm. The facility diagram and the pumping and filling systems for tube sections, as well as the corresponding measuring equipment, are shown in <xref ref-type="fig" rid="fire-06-00435-f001">Figure 1</xref>. The driver section of the facility with a length of 1 m is filled with He. The driven section is filled with a combustible mixture and is separated from the driver section by a copper diaphragm with calibrated notches and has a length of 4.5 m. The diaphragm rupture initiates the formation of a shock wave that propagates along the driven section and heats the combustible mixture to the ignition temperature. The component composition of the initial mixture was determined using the partial pressure method. The gas dynamic parameters of the flow behind the incident shock wave front were estimated using the GASEQ program [<xref ref-type="bibr" rid="B18-fire-06-00435">18</xref>].</p>
+      <p>The determination of the shock wave velocity <italic>V<sub>SW</sub>,</italic> and the gas pressure <italic>p</italic> profile behind the shock wave was carried out using piezoelectric sensors located along the surface of the driven section. The resonance frequency for piezoelectric sensors is more than 500 kHz. The moment of arrival of the shock wave in measuring section A was also recorded by the pressure sensor. The mixture ignition was recorded by the optical system consisting of the spectrograph, the PMT-100 photomultiplier, and the Agilent 54624A oscilloscope.</p>
+      <p><xref ref-type="fig" rid="fire-06-00435-f002">Figure 2</xref> shows a typical oscillogram of signals from the piezoelectric sensor located in measuring section A and the optical system. The optical system records the emission of an electronically excited OH* radical, which is generated at the wavelength <italic>&#x3BB;</italic> = 306.8 nm as a result of the A<sup>2</sup>&#x3A3;<sup>+</sup> &#x2192; X<sup>2</sup>&#x3A0; transition. These data were obtained for the ignition of a stoichiometric mixture diluted with argon (Ar = 95%) at the shock wave velocity <italic>V<sub>WS</sub></italic> = 1.04 km/s, gas temperature <italic>T</italic> = 1176 K, and pressure <italic>p</italic> = 0.74 atm behind the shock wave. It can be seen that the emission starts in <italic>&#x3C4;<sub>l</sub></italic> = 150 &#xB5;s after the registration of the pressure jump, and the maximum level is reached after <italic>&#x3C4;<sub>l,max</sub></italic> = 170 &#xB5;s. </p>
+      <p>The optical system in experiments on the combustible mixture ignition behind an incident shock does not follow the evolution of chemical processes in any one physically infinitesimal volume of gas but registers changes in state in various volumes moving with the gas flow [<xref ref-type="bibr" rid="B19-fire-06-00435">19</xref>]. Therefore, the value of <italic>&#x3C4;<sub>l</sub></italic> presents the laboratory ignition delay time. To obtain the real ignition delay time <italic>&#x3C4;</italic>, the laboratory ignition delay time must be multiplied by the ratio of gas densities after and before the wavefront. The ignition delay time <italic>&#x3C4;</italic> afterward was determined by the value <italic>&#x3C4;<sub>l, max</sub></italic>, i.e., by the moment when the emission intensity of the OH* radical reaches the maximum level. This was accepted due to the fact that the computer program used in further calculations fixes precisely this parameter that characterizes the ignition of the mixture.</p>
+    </sec>
+    <sec id="sec3-fire-06-00435">
+      <title>3. Numerical Modeling</title>
+      <p>The numerical modeling of the H<sub>2</sub>/O<sub>2</sub>/Ar mixture ignition was carried out using the detailed kinetic model proposed in Ref. [<xref ref-type="bibr" rid="B20-fire-06-00435">20</xref>]. The model is based on an analysis of the available information on the rate constants of elementary reactions as applied to the combustion of hydrogen&#x2013;oxygen mixtures [<xref ref-type="bibr" rid="B21-fire-06-00435">21</xref>,<xref ref-type="bibr" rid="B22-fire-06-00435">22</xref>,<xref ref-type="bibr" rid="B23-fire-06-00435">23</xref>,<xref ref-type="bibr" rid="B24-fire-06-00435">24</xref>,<xref ref-type="bibr" rid="B25-fire-06-00435">25</xref>,<xref ref-type="bibr" rid="B26-fire-06-00435">26</xref>]. The rate constants of reverse reactions as well as thermal effects were calculated using the well-known database of thermodynamic data [<xref ref-type="bibr" rid="B27-fire-06-00435">27</xref>]. Calculations were carried out using the CHEMKIN software package [<xref ref-type="bibr" rid="B28-fire-06-00435">28</xref>] under conditions of an adiabatic process at constant pressure.</p>
+      <p>The use of the emission of OH* radicals to determine the ignition delay time <italic>&#x3C4;</italic> is explained by the fact that they are formed at an early stage of the ignition process. Since these radicals are absent in the kinetic model used for calculations, the ignition delay time was taken to be the time when the product of the concentrations of O and H atoms reaches its maximum value. As shown by Hall and Petersen [<xref ref-type="bibr" rid="B29-fire-06-00435">29</xref>], O and H atoms are the main components leading to the formation of the OH* radical.</p>
+    </sec>
+    <sec id="sec4-fire-06-00435" sec-type="results">
+      <title>4. Results and Discussion</title>
+      <p>The ignition delay times <italic>&#x3C4;</italic> were measured behind the front of the incident shock wave at gas temperatures <italic>T</italic> = 870 &#xF7; 2500 K and pressures <italic>p</italic> = 0.5 &#xF7; 1.5 atm. The degree of the hydrogen&#x2013;oxygen mixture dilution with argon varied from 89 to 97%. The equivalence ratio <italic>&#x3D5;</italic> varied from 0.1 (fuel-lean mixture) to 2.0 (fuel-rich mixture). Some measurement results are shown in <xref ref-type="fig" rid="fire-06-00435-f003">Figure 3</xref>. Experimental data were obtained at pressures behind the shock wave of the order of 1 atm. The lines show the results of numerical simulations under the corresponding experimental conditions. </p>
+      <p>An analysis of <xref ref-type="fig" rid="fire-06-00435-f003">Figure 3</xref> shows that the value of <italic>&#x3C4;</italic> at temperatures <italic>T</italic> &gt; 1000 K does not greatly depend on the equivalent ratio <italic>&#x3D5;</italic>. In particular, experimental points with Ar = 95% and <italic>&#x3D5;</italic> = 2 (blue squares) are located in close proximity to experimental points with <italic>&#x3D5;</italic> = 0.1 (green squares). In other words, both fuel-rich and fuel-lean mixtures have approximately the same dependences <italic>&#x3C4;</italic> = <italic>&#x3C4;</italic>(<italic>T</italic>) at the same argon content in the mixture. Contrariwise, the value of <italic>&#x3C4;</italic> increases greatly with increasing argon concentration. This is illustrated by the experimental points obtained at Ar = 92% (black squares) and Ar = 97% (red squares), which differ in absolute value by approximately half an order of magnitude. The numerical simulation of the ignition process reproduces the behavior of experimental points quite well.</p>
+      <p>The calculated curves <italic>&#x3C4;</italic> = <italic>&#x3C4;</italic>(<italic>T</italic>) upon transition to the low-temperature range (<italic>T</italic> &lt; 1000 K) cease to correctly describe the experimentally measured values of <italic>&#x3C4;</italic>, as can be seen in <xref ref-type="fig" rid="fire-06-00435-f003">Figure 3</xref>. Volumetric self-ignition of the mixture in this temperature range can be considered as its rapid local heating in the turbulent boundary layer behind the shock wave with the formation of a flame and its propagation inside the shock tube. The time of the deflagration process in this case can be taken as the induction time. As estimates show, this time increases with decreasing temperature much more slowly than the self-ignition time and better describes experimental data in the low-temperature range [<xref ref-type="bibr" rid="B30-fire-06-00435">30</xref>]. A detailed study of this process was carried out in Ref. [<xref ref-type="bibr" rid="B31-fire-06-00435">31</xref>].</p>
+      <p>A comparison of the results of measuring the ignition delay time <italic>&#x3C4;</italic> obtained in this work with the experimental data of other authors is shown in <xref ref-type="fig" rid="fire-06-00435-f004">Figure 4</xref> and <xref ref-type="fig" rid="fire-06-00435-f005">Figure 5</xref>, where the lines represent the results of a numerical simulation using the detailed kinetic model proposed in ref. [<xref ref-type="bibr" rid="B20-fire-06-00435">20</xref>]. As can be seen in <xref ref-type="fig" rid="fire-06-00435-f004">Figure 4</xref>, the data of Hu et al. [<xref ref-type="bibr" rid="B15-fire-06-00435">15</xref>], obtained under the same conditions as the data in this work, agree quite well with each other and with the calculated curve. At a given concentration of argon in the mixture (Ar = 92%), the results of numerical modeling describe the experimental points not only in the high-temperature range but also in the low-temperature range down to a temperature of <italic>T</italic> = 850 K.</p>
+      <p>A comparison of the results of this work with the data obtained by Ryu et al. [<xref ref-type="bibr" rid="B32-fire-06-00435">32</xref>] is shown in <xref ref-type="fig" rid="fire-06-00435-f005">Figure 5</xref>. It is clear that at the same argon content in the mixture (Ar = 95%), the experimental data coincide with each other and with the calculated curve. When the argon concentration increases to 97.5%, an increase in the value of <italic>&#x3C4;</italic> is observed. This may be explained by the reduced efficiency of Ar as a third particle in the trimolecular chemical reaction initiating the ignition of a combustible mixture, which is several times lower than the corresponding efficiency of H<sub>2</sub> and O<sub>2</sub> molecules [<xref ref-type="bibr" rid="B20-fire-06-00435">20</xref>]. The effect of increasing the value of <italic>&#x3C4;</italic> with an increasing concentration of Ar in the mixture was also noted in the analysis of the results shown in <xref ref-type="fig" rid="fire-06-00435-f003">Figure 3</xref>.</p>
+      <p>The measurement of the ignition delay time <italic>&#x3C4;</italic> was carried out in this work at the gas pressure of the order of 1 atm, and in different experiments, it could vary from 0.5 to 1.5 atm. The results of measurements carried out at other pressures show that the value of <italic>&#x3C4;</italic> strongly depends on the gas pressure <italic>p</italic>, and in the high-temperature range, an almost linear dependence of <italic>&#x3C4;</italic> on (1/<italic>p</italic>) is observed for identical mixtures [<xref ref-type="bibr" rid="B13-fire-06-00435">13</xref>]. On the other hand, the value of <italic>&#x3C4;</italic> also depends on the mixture composition, including both the equivalence ratio <italic>&#x3D5;</italic> and the degree of dilution with argon, as can be seen in the analysis of the experimental data shown in <xref ref-type="fig" rid="fire-06-00435-f003">Figure 3</xref>.</p>
+      <p>The initial stage of combustion of the H<sub>2</sub>/O<sub>2</sub> mixture diluted with argon can be considered as the ignition of only its stoichiometric part. In this case, excess hydrogen in a fuel-rich mixture or excess oxygen in a fuel-lean mixture will act simultaneously with argon as a neutral diluent. In this regard, it can be assumed that the ignition delay time <italic>&#x3C4;</italic> in the high-temperature region depends linearly on the reciprocal value of the partial pressure <italic>p<sub>S</sub></italic> of the stoichiometric part of the combustible mixture. In other words, there must be a dependence: <italic>&#x3C4;p<sub>S</sub></italic> = <italic>&#x3C4;p<sub>S</sub></italic>(<italic>T</italic>). A comparison of the values of <italic>&#x3C4;p<sub>S</sub></italic> measured in this work for mixtures with the same values of the equivalence ratio <italic>&#x3D5;</italic>, but with different degrees of dilution with argon and at different pressures, confirms this dependence. To determine the partial pressure <italic>p<sub>S</sub></italic>, it is necessary to isolate the stoichiometric part of the mixture and multiply its mole fraction by the gas pressure <italic>p</italic> behind the shock wave front. In particular, the mole fraction of the stoichiometric part for a mixture of 4%H<sub>2</sub> + 4%O<sub>2</sub> + 92% Ar is equal to 0.06. In this case, the value of <italic>p<sub>S</sub></italic> is equal to 0.12 atm at a gas pressure <italic>p</italic> = 2 atm.</p>
+      <p>The use of the <italic>&#x3C4;p<sub>S</sub></italic> value to analyze the experimental data obtained in this work made it possible to identify the main regularities of the ignition process for combustible mixtures of different compositions. The results of measuring the ignition delay time are shown in <xref ref-type="fig" rid="fire-06-00435-f003">Figure 3</xref> and recalculated to the value <italic>&#x3C4;p<sub>S,</sub></italic> which is shown in <xref ref-type="fig" rid="fire-06-00435-f006">Figure 6</xref>. One can see that the experimental points, presented in the form of the dependence <italic>&#x3C4;p<sub>S</sub></italic> = <italic>&#x3C4;p<sub>S</sub></italic>(<italic>T</italic>), are concentrated along two approximation curves. The first group of points corresponds to fuel-rich mixtures and mixtures close to a stoichiometric one, for which the temperature dependence of <italic>&#x3C4;p<sub>S</sub></italic> is practically independent of the mixture composition and satisfies the Arrhenius law with activation energy <italic>E</italic> = 6960 K. The deviation of the <italic>&#x3C4;p<sub>S</sub></italic> value from the approximation curve in the temperature range <italic>T</italic> = 1000 &#xF7; 2500 K is in the order of 15&#x2013;20%, which is within the scattering of experimental points. </p>
+      <p>The second group of points corresponds to fuel-lean mixtures that are characterized by a high oxygen content. The <italic>&#x3C4;p<sub>S</sub></italic> values for these mixtures are 2&#x2013;5 times lower than similar values measured in mixtures with excess fuel. In this case, the temperature dependence of <italic>&#x3C4;p<sub>S</sub></italic> also obeys the Arrhenius law with activation energy <italic>E</italic> = 5720 K. This behavior of the <italic>&#x3C4;p<sub>S</sub></italic> value can be explained by referring to elementary reactions that describe the initial stage of hydrogen&#x2013;oxygen mixture ignition [<xref ref-type="bibr" rid="B20-fire-06-00435">20</xref>]. Chain initiation in the chain ignition mechanism at <italic>T</italic> ~ 1000 K is determined mainly by the reaction H<sub>2</sub> + O<sub>2</sub> = H + HO<sub>2</sub>, which generates hydrogen atoms for the chain branching reaction H + O<sub>2</sub> = O + OH. The rate of the latter is proportional to the concentration of O<sub>2</sub>. This leads to an acceleration of the ignition process as the O<sub>2</sub>/H<sub>2</sub> ratio increases.</p>
+      <p>The transition zone between two approximation curves is in the range of equivalent ratio values <italic>&#x3D5;</italic> from 0.2 to 0.5. This is clear in <xref ref-type="fig" rid="fire-06-00435-f007">Figure 7</xref>, which shows the change in <italic>&#x3C4;p<sub>S</sub></italic> depending on <italic>&#x3D5;</italic>, measured at <italic>T</italic> = 1200 K and <italic>p</italic> ~ 1 atm. An increase in the value of <italic>&#x3D5;</italic> in the above range leads to an increase in <italic>&#x3C4;p<sub>S</sub></italic> by approximately five times. At higher temperatures, the dependence of <italic>&#x3C4;p<sub>S</sub></italic> on excess oxygen begins to decrease, which can be explained by a significant increase in the rate constants of other initiating reactions. These primarily include dissociation reactions of the molecular components of the mixture.</p>
+      <p>Similar behavior of the value <italic>&#x3C4;p<sub>S</sub></italic> as a function of the equivalent ratio <italic>&#x3D5;</italic> is also observed for experimental data obtained by other authors. In particular, data from Ref. [<xref ref-type="bibr" rid="B32-fire-06-00435">32</xref>] and Ref. [<xref ref-type="bibr" rid="B33-fire-06-00435">33</xref>], recalculated for the dependence of <italic>&#x3C4;p<sub>S</sub></italic> on temperature, are shown in <xref ref-type="fig" rid="fire-06-00435-f008">Figure 8</xref>. In the first case, measurements were carried out in a fuel-rich mixture (<italic>&#x3D5;</italic> = 2.0) with Ar = 97.5% and <italic>p</italic> &#x2248; 1 atm. One can see that the experimental points are located near the approximation curve for fuel-rich mixtures in the temperature range from 1070 to 2140 K. In the second case, measurements were fulfilled in a fuel-lean mixture (<italic>&#x3D5;</italic> = 0.125) with Ar = 95% and <italic>p</italic> &#x2248; 0.5 atm. Here, one can also observe the concentration of experimental points near the corresponding approximation curve.</p>
+      <p>Analysis of the detailed kinetic model [<xref ref-type="bibr" rid="B20-fire-06-00435">20</xref>], which is used in this work for the numerical study of the ignition process, shows that the reaction H + O<sub>2</sub> = O + OH leading to chain branching is dominant at high temperatures and low pressures. This reaction at low temperatures and high pressures becomes less important than the competing reaction H + O2 + M = HO2 + M, which leads to chain termination. Therefore, the ignition delay time of the mixture in the low-temperature region increases sharply with increasing gas pressure. This can be seen in <xref ref-type="fig" rid="fire-06-00435-f009">Figure 9</xref>, where the dependence of the value <italic>&#x3C4;</italic> on the pressure <italic>p</italic> is shown. The lines represent the results of numerical simulation of the mixture ignition process under corresponding experimental conditions, which reproduce the measurement data quite well.</p>
+      <p>Data on ignition delay times obtained in ref. [<xref ref-type="bibr" rid="B13-fire-06-00435">13</xref>] and recalculated to the dependence of <italic>&#x3C4;p<sub>S</sub></italic> on temperature are shown in <xref ref-type="fig" rid="fire-06-00435-f010">Figure 10</xref>. It can be seen that the linear dependence of the value of log(<italic>&#x3C4;p<sub>S</sub></italic>) on the inverse temperature, which describes the experimental data in the high-temperature range, is sharply violated with increasing pressure. In the case under consideration, the deviation from the approximation curve begins at <italic>T</italic> = 1050 K for <italic>p</italic> = 4 atm and at <italic>T</italic> = 1180 K for <italic>p</italic> = 16 atm. Thus, the use of the concept of partial pressure of the stoichiometric part of a combustible mixture is a convenient tool for describing the dependence of <italic>&#x3C4;</italic> on <italic>T</italic> in the high-temperature region for H<sub>2</sub>/O<sub>2</sub>/Ar mixtures of various compositions.</p>
+      <p>It is worth noting some limitations associated with measuring <italic>&#x3C4;</italic> behind the front of the incident shock wave at low temperatures. An increase in the value of <italic>&#x3C4;</italic> with a decrease in the temperature can lead to a situation when the combustible mixture does not have time to ignite by the time the contact surface separating the driver and test gas arrives at the measuring section A. This is clearly seen in <xref ref-type="fig" rid="fire-06-00435-f011">Figure 11</xref>, which shows the dependences of <italic>&#x3C4;</italic> and the time of the contact surface arrival to the measuring section <italic>&#x3C4;<sub>cont</sub></italic> on the gas temperature. The measurements were carried out for a fuel-rich mixture with <italic>&#x3D5;</italic> = 2 and Ar = 95% at <italic>T</italic> = 900 &#xF7; 2400 K and <italic>p</italic> = 0.7 &#xF7; 1.5 atm. The contact surface in the experiments was identified by the moment of termination of molecular oxygen radiation absorption in the Schumann&#x2013;Runge band with the wavelength <italic>&#x3BB;</italic> = 220 nm. Analysis of <xref ref-type="fig" rid="fire-06-00435-f011">Figure 11</xref> shows that at <italic>T</italic> &#x2248; 1000 K and below, ignition of the mixture occurs near the contact surface. This reduces the reliability of the experimental data obtained. Therefore, it seems more appropriate to measure the ignition delay time at low temperatures in the reflected shock wave mode.</p>
+    </sec>
+    <sec id="sec5-fire-06-00435" sec-type="conclusions">
+      <title>5. Conclusions</title>
+      <p>The ignition delay times <italic>&#x3C4;</italic> in H<sub>2</sub>/O<sub>2</sub>/Ar mixtures were measured behind the front of the incident shock wave at <italic>T</italic> = 870 &#xF7; 2500 K, <italic>p</italic> = 0.5 &#xF7; 1.5 atm, <italic>&#x3D5;</italic> = 0.1 &#xF7; 2.0, and degrees of argon dilution from 89 to 97%. Numerical modeling was fulfilled using the detailed kinetic model developed previously.</p>
+      <p>Analysis of the obtained data made it possible to give an analytical description of the dependence of the measured values of <italic>&#x3C4;</italic> on temperature using the concept of partial pressure of the stoichiometric part of the combustible mixture. The use of this concept is a convenient tool for describing the ignition process in the high-temperature range. In the low-temperature range, a sharp deviation of the experimental points from the approximation curve is observed, and this deviation shifts to the region of higher temperatures with increasing gas pressure.</p>
+      <p>The ignition delay time measured behind the front of the incident shock wave can have a large error in the low-temperature range due to the simultaneous occurrence of the ignition process and the arrival of the contact surface between the driver and test gas into the measuring section. In this case, it is apparently more correct to perform measurements in the reflected shock wave mode.</p>
+    </sec>
+  </body>
+  <back>
+    <notes>
+      <title>Author Contributions</title>
+      <p>Conceptualization, G.G. and V.L.; methodology, V.P.; software, N.B. and V.L.; validation, P.K., I.Z. and G.G.; formal analysis, V.L.; investigation, V.P., P.K. and I.Z.; resources, V.L.; data curation, G.G.; writing&#x2014;original draft preparation, V.L.; writing&#x2014;review and editing, G.G.; visualization, V.L.; supervision, G.G.; project administration, V.L.; funding acquisition, V.L. All authors have read and agreed to the published version of the manuscript.</p>
+    </notes>
+    <notes>
+      <title>Institutional Review Board Statement</title>
+      <p>Not applicable.</p>
+    </notes>
+    <notes>
+      <title>Informed Consent Statement</title>
+      <p>Not applicable.</p>
+    </notes>
+    <notes>
+      <title>Data Availability Statement</title>
+      <p>The datasets obtained during the current study are available upon reasonable request.</p>
+    </notes>
+    <notes notes-type="COI-statement">
+      <title>Conflicts of Interest</title>
+      <p>The authors declare no conflict of interest.</p>
+    </notes>
+    <ref-list>
+      <title>References</title>
+      <ref id="B1-fire-06-00435">
+        <label>1.</label>
+        <element-citation publication-type="journal">
+          <person-group person-group-type="author">
+            <name>
+              <surname>Smirnov</surname>
+              <given-names>N.N.</given-names>
+            </name>
+            <name>
+              <surname>Nikitin</surname>
+              <given-names>V.F.</given-names>
+            </name>
+          </person-group>
+          <article-title>Modeling and simulation of hydrogen combustion in engines</article-title>
+          <source>Int. J. Hydrog. Energy</source>
+          <year>2014</year>
+          <volume>39</volume>
+          <fpage>1122</fpage>
+          <lpage>1136</lpage>
+          <pub-id pub-id-type="doi">10.1016/j.ijhydene.2013.10.097</pub-id>
+        </element-citation>
+      </ref>
+      <ref id="B2-fire-06-00435">
+        <label>2.</label>
+        <element-citation publication-type="journal">
+          <person-group person-group-type="author">
+            <name>
+              <surname>Jain</surname>
+              <given-names>I.P.</given-names>
+            </name>
+          </person-group>
+          <article-title>Hydrogen the fuel for 21st century</article-title>
+          <source>Int. J. Hydrog. Energy</source>
+          <year>2009</year>
+          <volume>34</volume>
+          <fpage>7368</fpage>
+          <lpage>7378</lpage>
+          <pub-id pub-id-type="doi">10.1016/j.ijhydene.2009.05.093</pub-id>
+        </element-citation>
+      </ref>
+      <ref id="B3-fire-06-00435">
+        <label>3.</label>
+        <element-citation publication-type="journal">
+          <person-group person-group-type="author">
+            <name>
+              <surname>Westbrook</surname>
+              <given-names>C.K.</given-names>
+            </name>
+            <name>
+              <surname>Dryer</surname>
+              <given-names>F.L.</given-names>
+            </name>
+          </person-group>
+          <article-title>Chemical kinetic modeling of hydrocarbon combustion</article-title>
+          <source>Prog. Energy Combust. Sci.</source>
+          <year>1984</year>
+          <volume>10</volume>
+          <fpage>1</fpage>
+          <lpage>57</lpage>
+          <pub-id pub-id-type="doi">10.1016/0360-1285(84)90118-7</pub-id>
+        </element-citation>
+      </ref>
+      <ref id="B4-fire-06-00435">
+        <label>4.</label>
+        <element-citation publication-type="journal">
+          <person-group person-group-type="author">
+            <name>
+              <surname>Kiverin</surname>
+              <given-names>A.D.</given-names>
+            </name>
+            <name>
+              <surname>Minaev</surname>
+              <given-names>K.O.</given-names>
+            </name>
+            <name>
+              <surname>Yakovenko</surname>
+              <given-names>I.S.</given-names>
+            </name>
+          </person-group>
+          <article-title>Modes of mild ignition in shock tubes: Origins and classification</article-title>
+          <source>Combust. Flame</source>
+          <year>2020</year>
+          <volume>221</volume>
+          <fpage>420</fpage>
+          <lpage>428</lpage>
+          <pub-id pub-id-type="doi">10.1016/j.combustflame.2020.08.013</pub-id>
+        </element-citation>
+      </ref>
+      <ref id="B5-fire-06-00435">
+        <label>5.</label>
+        <element-citation publication-type="journal">
+          <person-group person-group-type="author">
+            <name>
+              <surname>Chang</surname>
+              <given-names>X.</given-names>
+            </name>
+            <name>
+              <surname>Bai</surname>
+              <given-names>C.</given-names>
+            </name>
+            <name>
+              <surname>Zhang</surname>
+              <given-names>B.</given-names>
+            </name>
+            <name>
+              <surname>Sun</surname>
+              <given-names>B.</given-names>
+            </name>
+          </person-group>
+          <article-title>The effect of ignition delay time on the explosion behavior in non-uniform hydrogen-air mixtures</article-title>
+          <source>Int. J. Hydrog. Energy</source>
+          <year>2022</year>
+          <volume>47</volume>
+          <fpage>9810</fpage>
+          <lpage>9818</lpage>
+          <pub-id pub-id-type="doi">10.1016/j.ijhydene.2022.01.026</pub-id>
+        </element-citation>
+      </ref>
+      <ref id="B6-fire-06-00435">
+        <label>6.</label>
+        <element-citation publication-type="journal">
+          <person-group person-group-type="author">
+            <name>
+              <surname>Lyu</surname>
+              <given-names>G.</given-names>
+            </name>
+            <name>
+              <surname>Zhong</surname>
+              <given-names>C.</given-names>
+            </name>
+            <name>
+              <surname>Gou</surname>
+              <given-names>X.</given-names>
+            </name>
+          </person-group>
+          <article-title>A pressure-ratio equivalent method for ultra-high pressure hydrogen spontaneous ignition experiment</article-title>
+          <source>Int. J. Hydrog. Energy</source>
+          <year>2022</year>
+          <volume>47</volume>
+          <fpage>22650</fpage>
+          <lpage>22661</lpage>
+          <pub-id pub-id-type="doi">10.1016/j.ijhydene.2022.05.068</pub-id>
+        </element-citation>
+      </ref>
+      <ref id="B7-fire-06-00435">
+        <label>7.</label>
+        <element-citation publication-type="journal">
+          <person-group person-group-type="author">
+            <name>
+              <surname>B&#xF6;ttler</surname>
+              <given-names>H.</given-names>
+            </name>
+            <name>
+              <surname>Chen</surname>
+              <given-names>X.</given-names>
+            </name>
+            <name>
+              <surname>Xie</surname>
+              <given-names>S.</given-names>
+            </name>
+            <name>
+              <surname>Scholtissek</surname>
+              <given-names>A.</given-names>
+            </name>
+            <name>
+              <surname>Chen</surname>
+              <given-names>Z.</given-names>
+            </name>
+            <name>
+              <surname>Hasse</surname>
+              <given-names>C.</given-names>
+            </name>
+          </person-group>
+          <article-title>Flamelet modeling of forced ignition and flame propagation in hydrogen-air mixtures</article-title>
+          <source>Combust. Flame</source>
+          <year>2022</year>
+          <volume>243</volume>
+          <fpage>112125</fpage>
+          <pub-id pub-id-type="doi">10.1016/j.combustflame.2022.112125</pub-id>
+        </element-citation>
+      </ref>
+      <ref id="B8-fire-06-00435">
+        <label>8.</label>
+        <element-citation publication-type="journal">
+          <person-group person-group-type="author">
+            <name>
+              <surname>Villenave</surname>
+              <given-names>N.</given-names>
+            </name>
+            <name>
+              <surname>Dayma</surname>
+              <given-names>G.</given-names>
+            </name>
+            <name>
+              <surname>Brequigny</surname>
+              <given-names>P.</given-names>
+            </name>
+            <name>
+              <surname>Foucher</surname>
+              <given-names>F.</given-names>
+            </name>
+          </person-group>
+          <article-title>Experimental measurements of ultra-lean hydrogen ignition delays using a rapid compression machine under internal combustion engine conditions</article-title>
+          <source>Fuel</source>
+          <year>2024</year>
+          <volume>355</volume>
+          <fpage>129431</fpage>
+          <pub-id pub-id-type="doi">10.1016/j.fuel.2023.129431</pub-id>
+        </element-citation>
+      </ref>
+      <ref id="B9-fire-06-00435">
+        <label>9.</label>
+        <element-citation publication-type="journal">
+          <person-group person-group-type="author">
+            <name>
+              <surname>Smirnov</surname>
+              <given-names>N.</given-names>
+            </name>
+            <name>
+              <surname>Nikitin</surname>
+              <given-names>V.</given-names>
+            </name>
+            <name>
+              <surname>Mikhalchenko</surname>
+              <given-names>E.</given-names>
+            </name>
+            <name>
+              <surname>Stamov</surname>
+              <given-names>L.</given-names>
+            </name>
+          </person-group>
+          <article-title>Modeling a Combustion Chamber of a Pulse Detonation Engine</article-title>
+          <source>Fire</source>
+          <year>2023</year>
+          <volume>6</volume>
+          <elocation-id>335</elocation-id>
+          <pub-id pub-id-type="doi">10.3390/fire6090335</pub-id>
+        </element-citation>
+      </ref>
+      <ref id="B10-fire-06-00435">
+        <label>10.</label>
+        <element-citation publication-type="journal">
+          <person-group person-group-type="author">
+            <name>
+              <surname>Hanson</surname>
+              <given-names>R.K.</given-names>
+            </name>
+            <name>
+              <surname>Davidson</surname>
+              <given-names>D.F.</given-names>
+            </name>
+          </person-group>
+          <article-title>Recent advances in laser absorption and shock tube methods for studies of combustion chemistry</article-title>
+          <source>Prog. Energy Combust. Sci.</source>
+          <year>2014</year>
+          <volume>44</volume>
+          <fpage>103</fpage>
+          <lpage>114</lpage>
+          <pub-id pub-id-type="doi">10.1016/j.pecs.2014.05.001</pub-id>
+        </element-citation>
+      </ref>
+      <ref id="B11-fire-06-00435">
+        <label>11.</label>
+        <element-citation publication-type="journal">
+          <person-group person-group-type="author">
+            <name>
+              <surname>Martynenko</surname>
+              <given-names>V.V.</given-names>
+            </name>
+            <name>
+              <surname>Penyaz&#x2019;kov</surname>
+              <given-names>O.G.</given-names>
+            </name>
+            <name>
+              <surname>Ragotner</surname>
+              <given-names>K.A.</given-names>
+            </name>
+            <name>
+              <surname>Shabunya</surname>
+              <given-names>S.I.</given-names>
+            </name>
+          </person-group>
+          <article-title>High-temperature ignition of hydrogen and air at high pressures downstream of the reflected shock wave</article-title>
+          <source>J. Eng. Phys. Thermophys.</source>
+          <year>2004</year>
+          <volume>77</volume>
+          <fpage>785</fpage>
+          <lpage>793</lpage>
+          <pub-id pub-id-type="doi">10.1023/B:JOEP.0000045164.40205.6f</pub-id>
+        </element-citation>
+      </ref>
+      <ref id="B12-fire-06-00435">
+        <label>12.</label>
+        <element-citation publication-type="journal">
+          <person-group person-group-type="author">
+            <name>
+              <surname>Pang</surname>
+              <given-names>G.A.</given-names>
+            </name>
+            <name>
+              <surname>Davidson</surname>
+              <given-names>D.F.</given-names>
+            </name>
+            <name>
+              <surname>Hanson</surname>
+              <given-names>R.K.</given-names>
+            </name>
+          </person-group>
+          <article-title>Experimental study and modeling of shock tube ignition delay times for hydrogen&#x2013;oxygen&#x2013;argon mixtures at low temperatures</article-title>
+          <source>Proc. Combust. Inst.</source>
+          <year>2009</year>
+          <volume>32</volume>
+          <fpage>181</fpage>
+          <lpage>188</lpage>
+          <pub-id pub-id-type="doi">10.1016/j.proci.2008.06.014</pub-id>
+        </element-citation>
+      </ref>
+      <ref id="B13-fire-06-00435">
+        <label>13.</label>
+        <element-citation publication-type="journal">
+          <person-group person-group-type="author">
+            <name>
+              <surname>Herzler</surname>
+              <given-names>J.</given-names>
+            </name>
+            <name>
+              <surname>Naumann</surname>
+              <given-names>C.</given-names>
+            </name>
+          </person-group>
+          <article-title>Shock-tube study of the ignition of methane/ethane/hydrogen mixtures with hydrogen contents from 0% to 100% at different pressures</article-title>
+          <source>Proc. Combust. Inst.</source>
+          <year>2009</year>
+          <volume>32</volume>
+          <fpage>213</fpage>
+          <lpage>220</lpage>
+          <pub-id pub-id-type="doi">10.1016/j.proci.2008.07.034</pub-id>
+        </element-citation>
+      </ref>
+      <ref id="B14-fire-06-00435">
+        <label>14.</label>
+        <element-citation publication-type="journal">
+          <person-group person-group-type="author">
+            <name>
+              <surname>Zhang</surname>
+              <given-names>Y.</given-names>
+            </name>
+            <name>
+              <surname>Huang</surname>
+              <given-names>Z.</given-names>
+            </name>
+            <name>
+              <surname>Wei</surname>
+              <given-names>L.</given-names>
+            </name>
+            <name>
+              <surname>Zhang</surname>
+              <given-names>J.</given-names>
+            </name>
+            <name>
+              <surname>Law</surname>
+              <given-names>C.K.</given-names>
+            </name>
+          </person-group>
+          <article-title>Experimental and modeling study on ignition delays of lean mixtures of methane, hydrogen, oxygen, and argon at elevated pressures</article-title>
+          <source>Combust. Flame</source>
+          <year>2012</year>
+          <volume>159</volume>
+          <fpage>918</fpage>
+          <lpage>931</lpage>
+          <pub-id pub-id-type="doi">10.1016/j.combustflame.2011.09.010</pub-id>
+        </element-citation>
+      </ref>
+      <ref id="B15-fire-06-00435">
+        <label>15.</label>
+        <element-citation publication-type="journal">
+          <person-group person-group-type="author">
+            <name>
+              <surname>Hu</surname>
+              <given-names>E.</given-names>
+            </name>
+            <name>
+              <surname>Pan</surname>
+              <given-names>L.</given-names>
+            </name>
+            <name>
+              <surname>Gao</surname>
+              <given-names>Z.</given-names>
+            </name>
+            <name>
+              <surname>Lu</surname>
+              <given-names>X.</given-names>
+            </name>
+            <name>
+              <surname>Meng</surname>
+              <given-names>X.</given-names>
+            </name>
+            <name>
+              <surname>Huang</surname>
+              <given-names>Z.</given-names>
+            </name>
+          </person-group>
+          <article-title>Shock tube study on ignition delay of hydrogen and evaluation of various kinetic models</article-title>
+          <source>Int. J. Hydrog. Energy</source>
+          <year>2016</year>
+          <volume>41</volume>
+          <fpage>13261</fpage>
+          <lpage>13280</lpage>
+          <pub-id pub-id-type="doi">10.1016/j.ijhydene.2016.05.118</pub-id>
+        </element-citation>
+      </ref>
+      <ref id="B16-fire-06-00435">
+        <label>16.</label>
+        <element-citation publication-type="journal">
+          <person-group person-group-type="author">
+            <name>
+              <surname>Smirnov</surname>
+              <given-names>N.N.</given-names>
+            </name>
+            <name>
+              <surname>Penyazkov</surname>
+              <given-names>O.G.</given-names>
+            </name>
+            <name>
+              <surname>Sevrouk</surname>
+              <given-names>K.L.</given-names>
+            </name>
+            <name>
+              <surname>Nikitin</surname>
+              <given-names>V.F.</given-names>
+            </name>
+            <name>
+              <surname>Stamov</surname>
+              <given-names>L.I.</given-names>
+            </name>
+            <name>
+              <surname>Tyurenkova</surname>
+              <given-names>V.V.</given-names>
+            </name>
+          </person-group>
+          <article-title>Onset of detonation in hydrogen-air mixtures due to shock wave reflection inside a combustion chamber</article-title>
+          <source>Acta Astronaut.</source>
+          <year>2018</year>
+          <volume>149</volume>
+          <fpage>77</fpage>
+          <lpage>92</lpage>
+          <pub-id pub-id-type="doi">10.1016/j.actaastro.2018.05.024</pub-id>
+        </element-citation>
+      </ref>
+      <ref id="B17-fire-06-00435">
+        <label>17.</label>
+        <element-citation publication-type="journal">
+          <person-group person-group-type="author">
+            <name>
+              <surname>Pavlov</surname>
+              <given-names>V.A.</given-names>
+            </name>
+            <name>
+              <surname>Shatalov</surname>
+              <given-names>O.P.</given-names>
+            </name>
+          </person-group>
+          <article-title>Measuring the ignition delay time for hydrogen-oxygen mixtures behind the front of an incident shock wave</article-title>
+          <source>Kinet. Catal.</source>
+          <year>2011</year>
+          <volume>52</volume>
+          <fpage>157</fpage>
+          <lpage>165</lpage>
+          <pub-id pub-id-type="doi">10.1134/S0023158411020157</pub-id>
+        </element-citation>
+      </ref>
+      <ref id="B18-fire-06-00435">
+        <label>18.</label>
+        <element-citation publication-type="web">
+          <article-title>A Chemical Equilibrium Program for Windows</article-title>
+          <comment>Available online: <ext-link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="http://www.gaseq.co.uk/" ext-link-type="uri">http://www.gaseq.co.uk/</ext-link></comment>
+          <date-in-citation content-type="access-date" iso-8601-date="2005-01-01">(accessed on 1 January 2005)</date-in-citation>
+        </element-citation>
+      </ref>
+      <ref id="B19-fire-06-00435">
+        <label>19.</label>
+        <element-citation publication-type="book">
+          <person-group person-group-type="author">
+            <name>
+              <surname>Stupochenko</surname>
+              <given-names>Y.V.</given-names>
+            </name>
+            <name>
+              <surname>Losev</surname>
+              <given-names>S.A.</given-names>
+            </name>
+            <name>
+              <surname>Osipov</surname>
+              <given-names>A.I.</given-names>
+            </name>
+          </person-group>
+          <source>Relaxation in Shock Waves</source>
+          <publisher-name>Springer</publisher-name>
+          <publisher-loc>New York, NY, USA</publisher-loc>
+          <year>1967</year>
+        </element-citation>
+      </ref>
+      <ref id="B20-fire-06-00435">
+        <label>20.</label>
+        <element-citation publication-type="journal">
+          <person-group person-group-type="author">
+            <name>
+              <surname>Gerasimov</surname>
+              <given-names>G.Y.</given-names>
+            </name>
+            <name>
+              <surname>Shatalov</surname>
+              <given-names>O.P.</given-names>
+            </name>
+          </person-group>
+          <article-title>Kinetic mechanism of combustion of hydrogen-oxygen mixtures</article-title>
+          <source>J. Eng. Phys. Thermophys.</source>
+          <year>2013</year>
+          <volume>86</volume>
+          <fpage>987</fpage>
+          <lpage>995</lpage>
+          <pub-id pub-id-type="doi">10.1007/s10891-013-0919-7</pub-id>
+        </element-citation>
+      </ref>
+      <ref id="B21-fire-06-00435">
+        <label>21.</label>
+        <element-citation publication-type="journal">
+          <person-group person-group-type="author">
+            <name>
+              <surname>Cohen</surname>
+              <given-names>N.</given-names>
+            </name>
+            <name>
+              <surname>Westberg</surname>
+              <given-names>K.R.</given-names>
+            </name>
+          </person-group>
+          <article-title>Chemical kinetic data sheets for high-temperature chemical reactions</article-title>
+          <source>J. Phys. Chem. Ref. Data</source>
+          <year>1983</year>
+          <volume>12</volume>
+          <fpage>531</fpage>
+          <lpage>590</lpage>
+          <pub-id pub-id-type="doi">10.1063/1.555692</pub-id>
+        </element-citation>
+      </ref>
+      <ref id="B22-fire-06-00435">
+        <label>22.</label>
+        <element-citation publication-type="journal">
+          <person-group person-group-type="author">
+            <name>
+              <surname>Tsang</surname>
+              <given-names>W.</given-names>
+            </name>
+            <name>
+              <surname>Hampson</surname>
+              <given-names>R.F.</given-names>
+            </name>
+          </person-group>
+          <article-title>Chemical kinetic data base for combustion chemistry. Part I</article-title>
+          <source>Methane Relat. Compd. J. Phys. Chem. Ref. Data</source>
+          <year>1986</year>
+          <volume>15</volume>
+          <fpage>1087</fpage>
+          <lpage>1279</lpage>
+          <pub-id pub-id-type="doi">10.1063/1.555759</pub-id>
+        </element-citation>
+      </ref>
+      <ref id="B23-fire-06-00435">
+        <label>23.</label>
+        <element-citation publication-type="book">
+          <person-group person-group-type="author">
+            <name>
+              <surname>Warnatz</surname>
+              <given-names>J.</given-names>
+            </name>
+            <name>
+              <surname>Maas</surname>
+              <given-names>U.</given-names>
+            </name>
+            <name>
+              <surname>Dibble</surname>
+              <given-names>R.W.</given-names>
+            </name>
+          </person-group>
+          <source>Combustion</source>
+          <publisher-name>Springer</publisher-name>
+          <publisher-loc>Berlin/Heidelberg, Germany</publisher-loc>
+          <year>2003</year>
+        </element-citation>
+      </ref>
+      <ref id="B24-fire-06-00435">
+        <label>24.</label>
+        <element-citation publication-type="journal">
+          <person-group person-group-type="author">
+            <name>
+              <surname>Atkinson</surname>
+              <given-names>R.</given-names>
+            </name>
+            <name>
+              <surname>Baulch</surname>
+              <given-names>D.L.</given-names>
+            </name>
+            <name>
+              <surname>Cox</surname>
+              <given-names>R.A.</given-names>
+            </name>
+            <name>
+              <surname>Crowley</surname>
+              <given-names>J.N.</given-names>
+            </name>
+            <name>
+              <surname>Hampson</surname>
+              <given-names>R.F.</given-names>
+            </name>
+            <name>
+              <surname>Hynes</surname>
+              <given-names>R.G.</given-names>
+            </name>
+            <name>
+              <surname>Jenkin</surname>
+              <given-names>M.E.</given-names>
+            </name>
+            <name>
+              <surname>Rossi</surname>
+              <given-names>M.J.</given-names>
+            </name>
+            <name>
+              <surname>Troe</surname>
+              <given-names>J.</given-names>
+            </name>
+          </person-group>
+          <article-title>Evaluated kinetic and photochemical data for atmospheric chemistry: Volume I&#x2014;Gas phase reactions of O<sub>x</sub>, HO<sub>x</sub>, NO<sub>x</sub>, and SO<sub>x</sub> species</article-title>
+          <source>Atmos. Chem. Phys.</source>
+          <year>2004</year>
+          <volume>4</volume>
+          <fpage>1461</fpage>
+          <lpage>1738</lpage>
+          <pub-id pub-id-type="doi">10.5194/acp-4-1461-2004</pub-id>
+        </element-citation>
+      </ref>
+      <ref id="B25-fire-06-00435">
+        <label>25.</label>
+        <element-citation publication-type="journal">
+          <person-group person-group-type="author">
+            <name>
+              <surname>Baulch</surname>
+              <given-names>D.L.</given-names>
+            </name>
+            <name>
+              <surname>Bowman</surname>
+              <given-names>C.T.</given-names>
+            </name>
+            <name>
+              <surname>Cobos</surname>
+              <given-names>C.J.</given-names>
+            </name>
+            <name>
+              <surname>Cox</surname>
+              <given-names>R.A.</given-names>
+            </name>
+            <name>
+              <surname>Just</surname>
+              <given-names>T.</given-names>
+            </name>
+            <name>
+              <surname>Kerr</surname>
+              <given-names>J.A.</given-names>
+            </name>
+            <name>
+              <surname>Pilling</surname>
+              <given-names>J.</given-names>
+            </name>
+            <name>
+              <surname>Stocker</surname>
+              <given-names>D.</given-names>
+            </name>
+            <name>
+              <surname>Troe</surname>
+              <given-names>J.</given-names>
+            </name>
+            <name>
+              <surname>Tsang</surname>
+              <given-names>W.</given-names>
+            </name>
+            <etal/>
+          </person-group>
+          <article-title>Evaluated kinetic data for combustion modeling: Supplement II</article-title>
+          <source>J. Phys. Chem. Ref. Data</source>
+          <year>2005</year>
+          <volume>34</volume>
+          <fpage>757</fpage>
+          <lpage>1397</lpage>
+          <pub-id pub-id-type="doi">10.1063/1.1748524</pub-id>
+        </element-citation>
+      </ref>
+      <ref id="B26-fire-06-00435">
+        <label>26.</label>
+        <element-citation publication-type="journal">
+          <person-group person-group-type="author">
+            <name>
+              <surname>Konnov</surname>
+              <given-names>A.A.</given-names>
+            </name>
+          </person-group>
+          <article-title>Remaining uncertainties in the kinetic mechanism of hydrogen combustion</article-title>
+          <source>Combust. Flame</source>
+          <year>2008</year>
+          <volume>152</volume>
+          <fpage>507</fpage>
+          <lpage>528</lpage>
+          <pub-id pub-id-type="doi">10.1016/j.combustflame.2007.10.024</pub-id>
+        </element-citation>
+      </ref>
+      <ref id="B27-fire-06-00435">
+        <label>27.</label>
+        <element-citation publication-type="book">
+          <person-group person-group-type="author">
+            <name>
+              <surname>Burcat</surname>
+              <given-names>A.</given-names>
+            </name>
+            <name>
+              <surname>Ruscic</surname>
+              <given-names>B.</given-names>
+            </name>
+          </person-group>
+          <source>Third Millennium Ideal Gas and Condensed Phase Thermochemical Database for Combustion with Updates from Active Thermochemical Tables</source>
+          <comment>Tech. Rep. ANL-05/20</comment>
+          <publisher-name>Argonne National Laboratory</publisher-name>
+          <publisher-loc>Lemont, IL, USA</publisher-loc>
+          <year>2005</year>
+        </element-citation>
+      </ref>
+      <ref id="B28-fire-06-00435">
+        <label>28.</label>
+        <element-citation publication-type="book">
+          <person-group person-group-type="author">
+            <name>
+              <surname>Kee</surname>
+              <given-names>R.J.</given-names>
+            </name>
+            <name>
+              <surname>Rupley</surname>
+              <given-names>F.M.</given-names>
+            </name>
+            <name>
+              <surname>Meeks</surname>
+              <given-names>E.</given-names>
+            </name>
+            <name>
+              <surname>Miller</surname>
+              <given-names>J.A.</given-names>
+            </name>
+          </person-group>
+          <source>Chemkin-III: A Fortran Chemical Kinetics Package for the Analysis of Gas-Phase Chemical and Plasma Kinetics</source>
+          <comment>Tech. Rep. SAND96-8218</comment>
+          <publisher-name>Sandia National Laboratories</publisher-name>
+          <publisher-loc>Livermore, CA, USA</publisher-loc>
+          <year>1996</year>
+        </element-citation>
+      </ref>
+      <ref id="B29-fire-06-00435">
+        <label>29.</label>
+        <element-citation publication-type="journal">
+          <person-group person-group-type="author">
+            <name>
+              <surname>Hall</surname>
+              <given-names>J.M.</given-names>
+            </name>
+            <name>
+              <surname>Petersen</surname>
+              <given-names>E.L.</given-names>
+            </name>
+          </person-group>
+          <article-title>An optimized kinetics model for OH chemiluminescence at high temperatures and atmospheric pressures</article-title>
+          <source>Int. J. Chem. Kinet.</source>
+          <year>2006</year>
+          <volume>38</volume>
+          <fpage>714</fpage>
+          <lpage>724</lpage>
+          <pub-id pub-id-type="doi">10.1002/kin.20196</pub-id>
+        </element-citation>
+      </ref>
+      <ref id="B30-fire-06-00435">
+        <label>30.</label>
+        <element-citation publication-type="journal">
+          <person-group person-group-type="author">
+            <name>
+              <surname>Pavlov</surname>
+              <given-names>V.A.</given-names>
+            </name>
+            <name>
+              <surname>Gerasimov</surname>
+              <given-names>G.Y.</given-names>
+            </name>
+          </person-group>
+          <article-title>Ignition of hydrogen&#x2013;oxygen mixtures behind the incident shock wave front</article-title>
+          <source>J. Eng. Phys. Thermophys.</source>
+          <year>2016</year>
+          <volume>89</volume>
+          <fpage>587</fpage>
+          <lpage>591</lpage>
+          <pub-id pub-id-type="doi">10.1007/s10891-016-1415-7</pub-id>
+        </element-citation>
+      </ref>
+      <ref id="B31-fire-06-00435">
+        <label>31.</label>
+        <element-citation publication-type="journal">
+          <person-group person-group-type="author">
+            <name>
+              <surname>Ninnemann</surname>
+              <given-names>E.</given-names>
+            </name>
+            <name>
+              <surname>Koroglu</surname>
+              <given-names>B.</given-names>
+            </name>
+            <name>
+              <surname>Pryor</surname>
+              <given-names>O.</given-names>
+            </name>
+            <name>
+              <surname>Barak</surname>
+              <given-names>S.</given-names>
+            </name>
+            <name>
+              <surname>Nash</surname>
+              <given-names>L.</given-names>
+            </name>
+            <name>
+              <surname>Loparo</surname>
+              <given-names>Z.</given-names>
+            </name>
+            <name>
+              <surname>Sosa</surname>
+              <given-names>J.</given-names>
+            </name>
+            <name>
+              <surname>Ahmed</surname>
+              <given-names>K.</given-names>
+            </name>
+            <name>
+              <surname>Vasu</surname>
+              <given-names>S.</given-names>
+            </name>
+          </person-group>
+          <article-title>New insights into the shock tube ignition of H<sub>2</sub>/O<sub>2</sub> at low to moderate temperatures using high-speed end-wall imaging</article-title>
+          <source>Combust. Flame</source>
+          <year>2018</year>
+          <volume>187</volume>
+          <fpage>11</fpage>
+          <lpage>21</lpage>
+          <pub-id pub-id-type="doi">10.1016/j.combustflame.2017.08.021</pub-id>
+        </element-citation>
+      </ref>
+      <ref id="B32-fire-06-00435">
+        <label>32.</label>
+        <element-citation publication-type="journal">
+          <person-group person-group-type="author">
+            <name>
+              <surname>Ryu</surname>
+              <given-names>S.O.</given-names>
+            </name>
+            <name>
+              <surname>Hwang</surname>
+              <given-names>S.M.</given-names>
+            </name>
+          </person-group>
+          <article-title>Shock tube and modeling study of the H + O<sub>2</sub> = OH + O reaction over a wide range of composition, pressure, and temperature</article-title>
+          <source>J. Phys. Chem.</source>
+          <year>1995</year>
+          <volume>99</volume>
+          <fpage>13984</fpage>
+          <lpage>13991</lpage>
+          <pub-id pub-id-type="doi">10.1021/j100038a033</pub-id>
+        </element-citation>
+      </ref>
+      <ref id="B33-fire-06-00435">
+        <label>33.</label>
+        <element-citation publication-type="journal">
+          <person-group person-group-type="author">
+            <name>
+              <surname>Jachimowski</surname>
+              <given-names>C.J.</given-names>
+            </name>
+            <name>
+              <surname>Houghton</surname>
+              <given-names>W.M.</given-names>
+            </name>
+          </person-group>
+          <article-title>Shock-tube study of the initiation process in the hydrogen-oxygen reaction</article-title>
+          <source>Combust. Flame</source>
+          <year>1971</year>
+          <volume>17</volume>
+          <fpage>25</fpage>
+          <lpage>30</lpage>
+          <pub-id pub-id-type="doi">10.1016/S0010-2180(71)80134-7</pub-id>
+        </element-citation>
+      </ref>
+    </ref-list>
+    <sec sec-type="display-objects">
+      <title>Figures</title>
+      <fig id="fire-06-00435-f001" position="float">
+        <label>Figure 1</label>
+        <caption>
+          <p>Diagram of the shock facility.</p>
+        </caption>
+        <graphic xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="fire-06-00435-g001.tif"/>
+      </fig>
+      <fig id="fire-06-00435-f002" position="float">
+        <label>Figure 2</label>
+        <caption>
+          <p>Time scans of pressure and the OH* emission in measuring section A.</p>
+        </caption>
+        <graphic xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="fire-06-00435-g002.tif"/>
+      </fig>
+      <fig id="fire-06-00435-f003" position="float">
+        <label>Figure 3</label>
+        <caption>
+          <p>Ignition delay times <italic>&#x3C4;</italic> measured at various equivalence ratios and dilution degrees.</p>
+        </caption>
+        <graphic xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="fire-06-00435-g003.tif"/>
+      </fig>
+      <fig id="fire-06-00435-f004" position="float">
+        <label>Figure 4</label>
+        <caption>
+          <p>Comparison of the experimental results in this work with Hu et al.&#x2019;s [<xref ref-type="bibr" rid="B15-fire-06-00435">15</xref>] measurement data obtained under the same conditions.</p>
+        </caption>
+        <graphic xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="fire-06-00435-g004.tif"/>
+      </fig>
+      <fig id="fire-06-00435-f005" position="float">
+        <label>Figure 5</label>
+        <caption>
+          <p>Comparison of this work results with the data in Ryu and Hwang [<xref ref-type="bibr" rid="B32-fire-06-00435">32</xref>].</p>
+        </caption>
+        <graphic xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="fire-06-00435-g005.tif"/>
+      </fig>
+      <fig id="fire-06-00435-f006" position="float">
+        <label>Figure 6</label>
+        <caption>
+          <p>Values of <italic>&#x3C4;p<sub>S</sub></italic> calculated from the results of measurements in this work at arbitrary compositions. The lines are approximation curves.</p>
+        </caption>
+        <graphic xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="fire-06-00435-g006.tif"/>
+      </fig>
+      <fig id="fire-06-00435-f007" position="float">
+        <label>Figure 7</label>
+        <caption>
+          <p>Dependence of the value <italic>&#x3C4;p<sub>S</sub></italic> on the equivalent ratio <italic>&#x3D5;</italic> at <italic>T</italic> = 1200 K.</p>
+        </caption>
+        <graphic xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="fire-06-00435-g007.tif"/>
+      </fig>
+      <fig id="fire-06-00435-f008" position="float">
+        <label>Figure 8</label>
+        <caption>
+          <p>Experimental data of Ryu et al. [<xref ref-type="bibr" rid="B32-fire-06-00435">32</xref>] and Jachimowski et al. [<xref ref-type="bibr" rid="B33-fire-06-00435">33</xref>], recalculated for the dependence of <italic>&#x3C4;p<sub>S</sub></italic> on temperature.</p>
+        </caption>
+        <graphic xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="fire-06-00435-g008.tif"/>
+      </fig>
+      <fig id="fire-06-00435-f009" position="float">
+        <label>Figure 9</label>
+        <caption>
+          <p>Ignition delay times <italic>&#x3C4;</italic> at various pressures: squares are data from ref. [<xref ref-type="bibr" rid="B13-fire-06-00435">13</xref>]; circles are data from this work.</p>
+        </caption>
+        <graphic xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="fire-06-00435-g009.tif"/>
+      </fig>
+      <fig id="fire-06-00435-f010" position="float">
+        <label>Figure 10</label>
+        <caption>
+          <p>Experimental data of Herzler and Naumann [<xref ref-type="bibr" rid="B13-fire-06-00435">13</xref>], recalculated for the dependence of <italic>&#x3C4;p<sub>S</sub></italic> on temperature.</p>
+        </caption>
+        <graphic xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="fire-06-00435-g010.tif"/>
+      </fig>
+      <fig id="fire-06-00435-f011" position="float">
+        <label>Figure 11</label>
+        <caption>
+          <p>Dependences of ignition delay time <italic>&#x3C4;</italic> and the time of the contact surface arrival to the measuring section <italic>&#x3C4;<sub>cont</sub></italic> on temperature. Lines are approximating curves.</p>
+        </caption>
+        <graphic xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="fire-06-00435-g011.tif"/>
+      </fig>
+    </sec>
+    <fn-group>
+      <fn>
+        <p><bold>Disclaimer/Publisher&#x2019;s Note:</bold> The statements, opinions and data contained in all publications are solely those of the individual author(s) and contributor(s) and not of MDPI and/or the editor(s). MDPI and/or the editor(s) disclaim responsibility for any injury to people or property resulting from any ideas, methods, instructions or products referred to in the content.</p>
+      </fn>
+    </fn-group>
+  </back>
+</article>

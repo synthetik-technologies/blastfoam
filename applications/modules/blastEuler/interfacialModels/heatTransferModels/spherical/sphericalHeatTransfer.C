@@ -69,10 +69,15 @@ Foam::heatTransferModels::sphericalHeatTransfer::~sphericalHeatTransfer()
 Foam::tmp<Foam::volScalarField>
 Foam::heatTransferModels::sphericalHeatTransfer::Ki() const
 {
+    const tmp<volScalarField> td(pair_.dispersed().d());
+    const volScalarField& d = td();
+    const volScalarField& d0 = pair_.dispersed().d0();
+    const volScalarField dEff = max(d, d0);
     return
         60.0
        *pair_.continuous().thermo().kappa()
-       /sqr(pair_.dispersed().d());
+       *d
+       /pow3(dEff);
 }
 
 
@@ -81,10 +86,14 @@ Foam::scalar Foam::heatTransferModels::sphericalHeatTransfer::cellKi
     const label celli
 ) const
 {
+    const scalar d = pair_.dispersed().celld(celli);
+    const scalar d0 = pair_.dispersed().celld0(celli);
+    const scalar dEff = max(d, d0);
     return
         60.0
        *pair_.continuous().thermo().kappa()[celli]
-       /sqr(pair_.dispersed().celld(celli));
+       *d
+       /pow3(dEff);
 }
 
 

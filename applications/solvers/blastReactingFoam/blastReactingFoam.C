@@ -88,7 +88,7 @@ int main(int argc, char *argv[])
         Info<< "Time = " << runTime.name() << nl << endl;
 
         //- Move the mesh
-        mesh.update();
+        mesh.move();
 
         integrator.integrate();
 

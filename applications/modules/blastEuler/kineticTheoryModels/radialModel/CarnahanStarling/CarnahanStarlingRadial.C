@@ -84,10 +84,12 @@ Foam::kineticTheoryModels::radialModels::CarnahanStarling::gs0
                 dimensionedScalar(dimless, 0.0)
             );
     }
+    const volScalarField aBounded(min(phase1, phase1.alphaMax() - 1e-4));
+    const volScalarField oneMinusAlpha(max(1.0 - aBounded, dimensionedScalar(dimless, 1e-4)));
     return
-        1.0/(1 - phase1)
-      + 3*phase1/(2*sqr(1 - phase1))
-      + sqr(phase1)/(2*pow3(1 - phase1));
+        1.0/oneMinusAlpha
+      + 3.0*aBounded/(2.0*sqr(oneMinusAlpha))
+      + sqr(aBounded)/(2.0*pow3(oneMinusAlpha));
 }
 
 
@@ -103,10 +105,12 @@ Foam::kineticTheoryModels::radialModels::CarnahanStarling::cellgs0
     {
         return 0.0;
     }
+    const scalar aBounded = min(phase1[celli], phase1.alphaMax() - 1e-4);
+    const scalar oneMinusAlpha = max(1.0 - aBounded, 1e-4);
     return
-        1.0/(1 - phase1[celli])
-      + 3*phase1[celli]/(2*sqr(1 - phase1[celli]))
-      + sqr(phase1[celli])/(2*pow3(1 - phase1[celli]));
+        1.0/oneMinusAlpha
+      + 3.0*aBounded/(2.0*sqr(oneMinusAlpha))
+      + sqr(aBounded)/(2.0*pow3(oneMinusAlpha));
 }
 
 
@@ -127,11 +131,12 @@ Foam::kineticTheoryModels::radialModels::CarnahanStarling::gs0prime
                 dimensionedScalar(dimless, 0.0)
             );
     }
-
+    const volScalarField aBounded(min(phase1, phase1.alphaMax() - 1e-4));
+    const volScalarField oneMinusAlpha(max(1.0 - aBounded, dimensionedScalar(dimless, 1e-4)));
     return
-        2.5/sqr(1 - phase1)
-      + 4*phase1/pow3(1 - phase1)
-      + 1.5*sqr(phase1)/pow4(1 - phase1);
+        2.5/sqr(oneMinusAlpha)
+      + 4.0*aBounded/pow3(oneMinusAlpha)
+      + 1.5*sqr(aBounded)/pow4(oneMinusAlpha);
 }
 
 
@@ -147,11 +152,12 @@ Foam::kineticTheoryModels::radialModels::CarnahanStarling::cellgs0prime
     {
         return 0.0;
     }
-
+    const scalar aBounded = min(phase1[celli], phase1.alphaMax() - 1e-4);
+    const scalar oneMinusAlpha = max(1.0 - aBounded, 1e-4);
     return
-        2.5/sqr(1 - phase1[celli])
-      + 4*phase1[celli]/pow3(1 - phase1[celli])
-      + 1.5*sqr(phase1[celli])/pow4(1 - phase1[celli]);
+        2.5/sqr(oneMinusAlpha)
+      + 4.0*aBounded/pow3(oneMinusAlpha)
+      + 1.5*sqr(aBounded)/pow4(oneMinusAlpha);
 }
 
 

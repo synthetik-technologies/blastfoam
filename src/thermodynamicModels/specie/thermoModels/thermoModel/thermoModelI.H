@@ -78,7 +78,7 @@ inline Foam::scalar Foam::thermoModel<ThermoType>::T
         return T0;
     }
 
-    scalar Test = (this->*limit)(T0, T0);
+    scalar Test = (this->*limit)(ThermoType::TEsEstimate(rho, e, T0), T0);
     scalar Tnew = Test;
 
     int    iter = 0;
@@ -102,19 +102,45 @@ inline Foam::scalar Foam::thermoModel<ThermoType>::T
             << endl;
     }
 
+    scalar Tprev = 0.0;
+
+    // Previous evaluation for the secant derivative
+    scalar Tsec = 0.0;
+    scalar Fsec = 0.0;
+
     do
     {
+        Tprev = Test;
         Test = Tnew;
-        Tnew =
-            (this->*limit)
-            (
-                Test
-              - ((this->*F)(rho, f, Test) - f)/(this->*dFdT)(rho, f, Test),
-                Test
-            );
+
+        const scalar Fi = (this->*F)(rho, f, Test);
+        scalar dFi = (this->*dFdT)(rho, f, Test);
+
+        // From the third iteration use the secant slope where it is usable:
+        // where the analytic derivative does not match F (e.g. trace gas
+        // compressed towards the covolume limit), Newton converges only
+        // linearly and can exceed the iteration limit
+        if (iter >= 2 && mag(Test - Tsec) > small)
+        {
+            const scalar dFs = (Fi - Fsec)/(Test - Tsec);
+            if (std::isfinite(dFs) && dFs*dFi > 0)
+            {
+                dFi = dFs;
+            }
+        }
+        Tsec = Test;
+        Fsec = Fi;
+
+        Tnew = (this->*limit)(Test - (Fi - f)/dFi, Test);
 
         absError = mag((Tnew - Test));
         relError = absError/max(Tnew, small);
+
+        if (iter > 2 && mag(Tnew - Tprev) <= 1e-6*max(Tnew, 1.0))
+        {
+            Tnew = 0.5*(Tnew + Test);
+            break;
+        }
 
         if (diagnostics)
         {
@@ -291,7 +317,11 @@ Foam::thermoModel<ThermoType>::K
     const scalar T
 ) const
 {
-    scalar arg = -this->Y()*this->G(Pstd, T)/(RR*T);
+    // Standard-state (ideal-gas) Gibbs function, consistent with
+    // dKcdTbyKc. G(Pstd, T) goes through the equation of state, which for
+    // the combined thermo of a reaction (differences of the species
+    // coefficients, e.g. of the Abel-Nobel R and b) can be singular
+    scalar arg = -this->Y()*this->Gstd(T)/(RR*T);
 
     if (arg < 600)
     {

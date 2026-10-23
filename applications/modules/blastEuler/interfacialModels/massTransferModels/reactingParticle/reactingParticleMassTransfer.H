@@ -28,6 +28,13 @@ Description
     The change in volume of the diameterModel is used to determine mass
     transfer. Particles are assumed to be incompresssible.
 
+    The species of the transferred mass are given as fractions
+    (productSpecies, or <phase>Species), or, with
+    productsFromReactionRate true, taken from the reaction rate of the
+    reacting diameter model (e.g. Beckstead with products true): the
+    products of the burning and the consumed oxidisers (negative), in
+    yields that vary with the local oxidiser composition.
+
 SourceFiles
     reactingParticleMassTransfer.C
 
@@ -68,22 +75,32 @@ class reactingParticleMassTransfer
     bool reactingIs1_;
 
     //- Name of species to transfer mass from
-    hashedWordList phase1Species_;
+    mutable hashedWordList phase1Species_;
 
     //- Fraction of the phase1 species produced
     HashTable<scalar, word> phase1Yi_;
 
     //- Name of phase2 species
-    hashedWordList phase2Species_;
+    mutable hashedWordList phase2Species_;
 
     //- Fraction of the product species produced
     HashTable<scalar, word> phase2Yi_;
+
+    //- Take the product species and yields from the reaction rate
+    bool productsFromRate_;
+
+    //- Have the product species been taken from the reaction rate
+    mutable bool productsSet_;
 
     //- Return the reacting phase model
     inline const phaseModel& reactingPhase() const
     {
         return reactingIs1_ ? pair_.phase1() : pair_.phase2();
     }
+
+    //- Take the product species from the reaction rate (the diameter
+    //  model is constructed after the mass transfer models)
+    void setProductSpecies() const;
 
 public:
 
@@ -117,16 +134,9 @@ public:
         virtual tmp<volScalarField> phase2Y(const word& name) const;
 
         //- Return the names of the dispersed phase mass fractions
-        virtual hashedWordList phase1Species() const
-        {
-            return phase1Species_;
-        }
+        virtual hashedWordList phase1Species() const;
 
-        //- Return the names of the continuous phase mass fractions
-        virtual hashedWordList phase2Species() const
-        {
-            return phase2Species_;
-        }
+        virtual hashedWordList phase2Species() const;
 };
 
 

@@ -1,0 +1,142 @@
+/*--------------------------------*- C++ -*----------------------------------*\
+  =========                 |
+  \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox
+   \\    /   O peration     | Website:  https://openfoam.org
+    \\  /    A nd           | Version:  12
+     \\/     M anipulation  |
+\*---------------------------------------------------------------------------*/
+FoamFile
+{
+    format      ascii;
+    class       dictionary;
+    location    "constant";
+    object      physicalProperties;
+}
+// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
+
+phases          ( HE gas );
+
+TLow            200.0;
+
+HE
+{
+    type            detonating;
+    reactants
+    {
+        thermoType
+        {
+            transport       const;
+            thermo          eConst;
+            equationOfState Murnaghan;
+        }
+        equationOfState
+        {
+            rho0            1717.0;
+            // Unreacted Comp-B: Reuss mixture of the EuDetCode Murnaghan data
+            // of RDX, TNT and wax (K0 = 1/sum(phi_i/K0_i))
+            K0              1.053e+10;
+            n               6.03;
+            Gamma           0.35;
+            pRef            101325;
+            pMax            1e11;
+        }
+        specie
+        {
+            molWeight       65.0;
+        }
+        transport
+        {
+            mu              0;
+            Pr              1;
+        }
+        thermodynamics
+        {
+            Cv              1030;
+            Hf              0;
+        }
+    }
+    products
+    {
+        thermoType
+        {
+            transport       const;
+            thermo          eConst;
+            equationOfState eJWLC;
+        }
+        // Comp-B products: EuDetCode CJDetonation "COMP-B" 1717 BKW
+        // (utilities/thermo_fitter/eudet_compB); E0 places the reference
+        // isentrope through the CJ point for the reactant energy Cv*300 K,
+        // so that the CJ point of this EOS is the programmed-burn speed
+        // (utilities/thermo_fitter/ejwlc_cj_entries.py)
+        equationOfState
+        {
+            rho0            1717.0;
+            A               1.41386e+12;
+            B               1.54639e+10;
+            C               1.72309e+09;
+            R1              5.74774;
+            R2              1.35315;
+            omega           0.408147;
+            pMax            1e11;
+            Cv              609.326;
+            T_CJ            3891.43;
+            rho_CJ          2224.50;
+            omegaT          0.716744;
+            E0              -4823643.38;
+        }
+        specie
+        {
+            molWeight       28.0;
+        }
+        transport
+        {
+            mu              0;
+            Pr              1;
+        }
+        thermodynamics
+        {
+            Cv              609.326;
+            Hf              0;
+        }
+    }
+    activationModel linear;
+    initiation
+    {
+        E0              0;
+        points          ( ( 0.0 0.0005 0.0005 ) );
+        vDet            7934.30;
+        Pcj             2.46599e+10;
+    }
+    residualRho     1e-12;
+    residualAlpha   1e-12;
+    TLow            200.0;
+}
+
+gas
+{
+    type            basic;
+    thermoType
+    {
+        transport       const;
+        thermo          eConst;
+        equationOfState perfectGas;
+    }
+    specie
+    {
+        molWeight       28.97;
+    }
+    transport
+    {
+        mu              0;
+        Pr              1;
+    }
+    thermodynamics
+    {
+        Cv              718;
+        Hf              0;
+    }
+    residualRho     1e-06;
+    residualAlpha   1e-06;
+}
+
+// ************************************************************************* //

@@ -1,0 +1,12 @@
+#!/bin/sh
+cd ${0%/*} || exit 1
+
+if [ -z "$WM_PROJECT_DIR" ]; then
+    . /opt/OpenFOAM/OpenFOAM-12/etc/bashrc
+    . /opt/OpenFOAM/blastfoam/etc/bashrc
+fi
+
+. $WM_PROJECT_DIR/bin/tools/CleanFunctions
+
+cleanCase
+rm -rf 0 > /dev/null 2>&1

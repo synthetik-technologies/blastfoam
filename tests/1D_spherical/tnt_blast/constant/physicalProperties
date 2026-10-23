@@ -1,0 +1,147 @@
+/*--------------------------------*- C++ -*----------------------------------*\
+| =========                 |                                                 |
+| \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox           |
+|  \\    /   O peration     | Version:  2.3.0                                 |
+|   \\  /    A nd           | Web:      www.OpenFOAM.org                      |
+|    \\/     M anipulation  |                                                 |
+\*---------------------------------------------------------------------------*/
+FoamFile
+{
+    version     2.0;
+    format      ascii;
+    class       dictionary;
+    location    "constant";
+    object      physicalProperties;
+}
+// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
+
+phases (tnt air);                // List of phases
+
+tnt
+{
+    type detonating;
+    reactants
+    {
+        thermoType
+        {
+            transport   const;
+            thermo      eConst;
+            equationOfState Murnaghan;
+        }
+        equationOfState
+        {
+            // Unreacted TNT: EuDetCode ingredient data
+            rho0            1630;
+            K0              8.93e+09;
+            n               5.5;
+            Gamma           0.35;
+            pRef            101325;
+            pMax            1e11;
+        }
+        specie
+        {
+            molWeight       227.13;
+        }
+        transport
+        {
+            mu              0;
+            Pr              1;
+        }
+        thermodynamics
+        {
+            Cv              1000;
+            Hf              0.0;
+        }
+    }
+    products
+    {
+        thermoType
+        {
+            transport   const;
+            thermo      eConst;
+            equationOfState eJWLC;
+        }
+        // TNT products: EuDetCode CJDetonation "TNT" 1630 BKW
+        // (utilities/thermo_fitter/eudet_tnt); E0 places the reference
+        // isentrope through the CJ point for the reactant energy Cv*300 K,
+        // so that the CJ point of this EOS is the programmed-burn speed
+        // (utilities/thermo_fitter/ejwlc_cj_entries.py --e-reactants 300000)
+        equationOfState
+        {
+            rho0            1630.0;
+            A               1.05599e+12;
+            B               1.23643e+10;
+            C               1.29464e+09;
+            R1              5.96786;
+            R2              1.36616;
+            omega           0.318131;
+            pMax            1e11;
+            Cv              529.889;
+            T_CJ            3636.76;
+            rho_CJ          2119.74;
+            omegaT          0.649526;
+            E0              -4262687.88;
+        }
+        specie
+        {
+            molWeight       28.0;
+        }
+        transport
+        {
+            mu              0;
+            Pr              1;
+        }
+        thermodynamics
+        {
+            Cv              529.889;
+            Hf              0.0;
+        }
+    }
+
+    activationModel linear;
+    initiation
+    {
+        E0              0;
+        points          ((0 0 1));      // Centre initiation
+        vDet            6696.23;        // CJ speed of the products EOS
+        Pcj             1.68861e+10;
+    }
+
+    residualRho     1e-6;
+    residualAlpha   1e-10;
+}
+
+air
+{
+    type basic;
+    thermoType
+    {
+        transport   const;
+        thermo      eConst;
+        equationOfState idealGas;
+    }
+    equationOfState
+    {
+        gamma           1.4;            // Heat capactiy ratio
+    }
+    specie
+    {
+        molWeight       28.97;
+    }
+    transport
+    {
+        mu              0;
+        Pr              1;
+    }
+    thermodynamics
+    {
+        type        eConst;
+        Cv          718;
+        Hf          0;
+    }
+
+    residualRho     1e-6;
+    residualAlpha   1e-10;
+}
+
+// ************************************************************************* //

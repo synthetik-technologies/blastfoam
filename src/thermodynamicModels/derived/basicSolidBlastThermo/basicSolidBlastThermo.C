@@ -48,11 +48,20 @@ void Foam::basicSolidBlastThermo<Thermo>::calculate()
         scalar& Ti = TCells[celli];
 
         // Update temperature
-        Ti = t.TRhoE(Ti, rhoi, ei);
-        if (Ti < this->TLow_)
+        const scalar eTest = t.Es(rhoi, ei, this->TLow_);
+        if (ei < eTest)
         {
-            ei = t.Es(rhoi, ei, this->TLow_);
+            ei = eTest;
             Ti = this->TLow_;
+        }
+        else
+        {
+            Ti = t.TRhoE(Ti, rhoi, ei);
+            if (Ti > this->THigh_)
+            {
+                Ti = this->THigh_;
+                ei = t.Es(rhoi, ei, Ti);
+            }
         }
 
         CpCells[celli] = t.Cp(rhoi, ei, Ti);
@@ -104,11 +113,20 @@ void Foam::basicSolidBlastThermo<Thermo>::calculate()
                 scalar& ei = phe[facei];
                 scalar& Ti = pT[facei];
 
-                Ti = t.TRhoE(Ti, rhoi, ei);
-                if (Ti < this->TLow_)
+                const scalar eTest = t.Es(rhoi, ei, this->TLow_);
+                if (ei < eTest)
                 {
-                    ei = t.Es(rhoi, ei, this->TLow_);
+                    ei = eTest;
                     Ti = this->TLow_;
+                }
+                else
+                {
+                    Ti = t.TRhoE(Ti, rhoi, ei);
+                    if (Ti > this->THigh_)
+                    {
+                        Ti = this->THigh_;
+                        ei = t.Es(rhoi, ei, Ti);
+                    }
                 }
 
                 pCp[facei] = t.Cp(rhoi, ei, Ti);
@@ -204,6 +222,20 @@ void Foam::basicSolidBlastThermo<Thermo>::updateRho()
         "rho",
         dimDensity,
         &Thermo::thermoType::rho0
+    );
+}
+
+
+template<class Thermo>
+void Foam::basicSolidBlastThermo<Thermo>::updateRho(const volScalarField& p)
+{
+    this->rho_ == Thermo::volScalarFieldProperty
+    (
+        "rho",
+        dimDensity,
+        &Thermo::thermoType::rho,
+        p,
+        this->T_
     );
 }
 

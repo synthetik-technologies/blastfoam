@@ -159,7 +159,7 @@ void Foam::multicomponentBlastThermo::initializeModels()
     {
         alphaRhoName = IOobject::groupName("alphaRho", phaseName_);
     }
-    else if
+    if
     (
         mesh.foundObject<volScalarField>
         (
@@ -169,6 +169,12 @@ void Foam::multicomponentBlastThermo::initializeModels()
     {
         alphaRhoName = IOobject::groupName("alphaRho", masterName_);
     }
+
+    alphaRhoPtr_.set(&mesh.lookupObject<volScalarField>(alphaRhoName));
+    alphaRhoPhiPtr_.set
+    (
+        &mesh.lookupObject<surfaceScalarField>(alphaRhoPhiName)
+    );
 
     integratorPtr_.reset
     (
@@ -438,6 +444,11 @@ void Foam::multicomponentBlastThermo::integrator::update()
     alphaRhoLimiter->interpolateOwnNei(talphaRhoOwn, talphaRhoNei);
     const surfaceScalarField& alphaRhoOwn = talphaRhoOwn();
     const surfaceScalarField& alphaRhoNei = talphaRhoNei();
+
+    // Face mass fractions of the active species
+    PtrList<surfaceScalarField> YOwn(Y_.size());
+    PtrList<surfaceScalarField> YNei(Y_.size());
+    bool allActive = true;
     forAll(Y_, i)
     {
         if (active_[i])
@@ -458,20 +469,68 @@ void Foam::multicomponentBlastThermo::integrator::update()
                 )
             );
 
-            tmp<surfaceScalarField> YOwn, YNei;
-            YLimiter->interpolateOwnNei(YOwn, YNei);
+            tmp<surfaceScalarField> tYOwn, tYNei;
+            YLimiter->interpolateOwnNei(tYOwn, tYNei);
+            YOwn.set(i, tYOwn.ptr());
+            YNei.set(i, tYNei.ptr());
+        }
+        else
+        {
+            allActive = false;
+        }
+    }
 
+    if (allActive)
+    {
+        // Species fluxes from the mass flux of the phase with the upwind
+        // face mass fractions, normalised so that they sum to one: the
+        // species fluxes then sum to the mass flux, and each species mass
+        // is conserved. (Fluxes from independently limited mass fractions
+        // do not sum to the mass flux; the normalisation of the mass
+        // fractions then moves mass between the species, e.g. between air
+        // and transferred products at a contact.)
+        surfaceScalarField sumOwn(0*YOwn[0]);
+        surfaceScalarField sumNei(0*YNei[0]);
+        forAll(Y_, i)
+        {
+            sumOwn += max(YOwn[i], scalar(0));
+            sumNei += max(YNei[i], scalar(0));
+        }
+        sumOwn.max(small);
+        sumNei.max(small);
+        const surfaceScalarField up(pos0(alphaRhoPhi_));
+        forAll(Y_, i)
+        {
+            alphaRhoYDelta_.set
+            (
+                i,
+                fvc::div
+                (
+                    alphaRhoPhi_
+                   *(
+                        up*max(YOwn[i], scalar(0))/sumOwn
+                      + (1 - up)*max(YNei[i], scalar(0))/sumNei
+                    )
+                )
+            );
+        }
+        return;
+    }
+
+    forAll(Y_, i)
+    {
+        if (active_[i])
+        {
             // Calculate and store delta
             alphaRhoYDelta_.set
             (
                 i,
-                // fvc::div(alphaRhoPhi_, Y, "div("+alphaRhoPhi_.name()+",Yi)")
                 fvc::div
                 (
                     flux.flux
                     (
-                        (YOwn*alphaRhoOwn)(),
-                        (YNei*alphaRhoNei)(),
+                        (YOwn[i]*alphaRhoOwn)(),
+                        (YNei[i]*alphaRhoNei)(),
                         flux.phi()
                     )
                 )

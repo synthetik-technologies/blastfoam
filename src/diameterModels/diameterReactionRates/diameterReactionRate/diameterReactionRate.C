@@ -24,6 +24,7 @@ License
 \*---------------------------------------------------------------------------*/
 
 #include "diameterReactionRate.H"
+#include "diameterModel.H"
 
 // * * * * * * * * * * * * * * Static Data Members * * * * * * * * * * * * * //
 
@@ -49,5 +50,19 @@ Foam::diameterReactionRate::diameterReactionRate
 
 Foam::diameterReactionRate::~diameterReactionRate()
 {}
+
+
+// * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
+
+Foam::tmp<Foam::volScalarField>
+Foam::diameterReactionRate::productYield(const word& name) const
+{
+    return volScalarField::New
+    (
+        IOobject::groupName("yield", name),
+        dModel_.d().mesh(),
+        dimensionedScalar(dimless, 0)
+    );
+}
 
 // ************************************************************************* //

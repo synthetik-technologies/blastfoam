@@ -1,0 +1,155 @@
+/*--------------------------------*- C++ -*----------------------------------*\
+  =========                 |
+  \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox
+   \\    /   O peration     | Website:  https://openfoam.org
+    \\  /    A nd           | Version:  12
+     \\/     M anipulation  |
+\*---------------------------------------------------------------------------*/
+FoamFile
+{
+    version     2.0;
+    format      ascii;
+    class       dictionary;
+    location    "constant";
+    object      phaseProperties;
+}
+// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
+
+phases (solid gas);
+pRef 100000;
+VRelaxation ode;
+
+solid
+{
+    phaseType        granular;
+    diameterModel    constant;
+    constantDiameterCoeffs
+    {
+        d           1e-3;
+    }
+    alphaMax        0.65;
+    alphaMinFriction 0.5;
+
+    kineticTheoryCoeffs
+    {
+        e           0.9;
+    }
+    residualRho     0;
+    residualAlpha   1e-10;
+}
+
+gas
+{
+    phaseType       fluid;
+
+    diameterModel   constant;
+    constantDiameterCoeffs
+    {
+        d           0;
+    }
+
+    residualRho     1e-6;
+    residualAlpha   1e-10;
+}
+
+blending
+{
+    default
+    {
+        type            none;
+        continuousPhase gas;
+    }
+}
+
+interfacialPressure
+(
+    (gas and solid)
+    {
+        type            single;
+        phase           gas;
+    }
+);
+
+interfacialVelocity
+(
+    (gas and solid)
+    {
+        type            single;
+        phase           solid;
+    }
+);
+
+aspectRatio
+(
+);
+
+solveDragODE off;
+dragODECoeffs
+{
+    solver          seulex;
+    relTol          1e-3;
+}
+
+drag
+(
+    (solid in gas)
+    {
+        type            GidaspowErgunWenYu;
+        residualRe      1e-3;
+        swarmCorrection
+        {
+            type        none;
+        }
+    }
+);
+
+heatTransfer
+(
+    (solid in gas)
+    {
+        type            RanzMarshall;
+        NuModel         Gunn;
+    }
+);
+
+virtualMass
+(
+);
+
+turbulentDispersion
+(
+);
+
+kineticTheory
+{
+    alphaMax            0.65;
+    residualAlpha       1e-8;
+    alphaMinFriction    0.5;
+
+    radialModel         SinclairJackson;
+    viscosityModel      none;
+    conductivityModel   Syamlal;
+    granularPressureModel Lun;
+    frictionalStressModel JohnsonJackson;
+
+    JohnsonJacksonCoeffs
+    {
+        alphaMinFriction        0.5;
+        Fr                      0.05;
+        eta                     2;
+        p                       5;
+        phi                     28.5;
+        alphaDeltaMin           0.05;
+    }
+}
+
+pressureRelaxationSolver
+{
+    type            none;
+}
+
+pressureRelaxation
+(
+);
+
+// ************************************************************************* //

@@ -406,43 +406,90 @@ Foam::kineticTheorySystem::lambda
                 false
             ),
             fluid_.mesh(),
-            dimensionedScalar(dimensionSet(0, 2, -1, 0, 0), 0)
+            dimensionedScalar(dimensionSet(0, 2, -1, 0, 0), 0),
+            zeroGradientFvPatchScalarField::typeName
         )
     );
     volScalarField& l = tmpLambda.ref();
 
     using Foam::constant::mathematical::pi;
-    tmp<volScalarField> tm1(phase.rho()*pi*pow3(phase.d())/6.0);
-    const volScalarField& m1 = tm1();
-
+    tmp<volScalarField> td1 = phase.d();
+    const volScalarField& d1 = td1();
     tmp<volScalarField> tTheta1 = phase.Theta();
     const volScalarField& Theta1 = tTheta1();
+    const volScalarField& alpha1 = phase;
+    const volScalarField& rho1 = phase.rho();
+    const scalar rAlpha1 = phase.residualAlpha().value();
 
     forAll(phases_, phasej)
     {
         const phaseModel& phase2 = phases_[phasej];
-
-        tmp<volScalarField> tm2(phase2.rho()*pi*pow3(phase2.d())/6.0);
-        const volScalarField&  m2 = tm2();
-
+        tmp<volScalarField> td2 = phase2.d();
+        const volScalarField& d2 = td2();
         tmp<volScalarField> tTheta2 = phase2.Theta();
         const volScalarField& Theta2 = tTheta2();
+        const volScalarField& alpha2 = phase2;
+        const scalar rAlpha2 = phase2.residualAlpha().value();
 
-        tmp<volScalarField> tPsij(Ps(phase, phase2));
-        const volScalarField& Psij = tPsij();
+        phasePairKey key(phase.name(), phase2.name(), false);
+        const scalar eVal = this->es(key);
+        const scalar eta = 0.5*(1.0 + eVal);
 
-        l +=
-            Psij/phase.rho()*(phase.d() + phase2.d())/6.0
-           *sqrt
+        forAll(l, celli)
+        {
+            if
             (
-                2.0*sqr(m1*Theta1 + m2*Theta2)
-               /max
-                (
-                    pi*Theta1*Theta2*(sqr(m1)*Theta1 + sqr(m2)*Theta2),
-                    dimensionedScalar(dimensionSet(2, 6, -6, 0, 0), small)
-                )
-            );
+                alpha1[celli] > rAlpha1
+             && alpha2[celli] > rAlpha2
+             && Theta1[celli] > small
+             && Theta2[celli] > small
+             && rho1[celli] > small
+            )
+            {
+                const scalar d1Val = max(d1[celli], 1e-10);
+                const scalar d2Val = max(d2[celli], 1e-10);
+                const scalar t1v = max(Theta1[celli], 0.0);
+                const scalar t2v = max(Theta2[celli], 0.0);
+                const scalar g0Val = radialModel_->cellgs0(celli, phase, phase2);
+
+                if (&phase == &phase2)
+                {
+                    const scalar val = (8.0/3.0)*eta*sqr(alpha1[celli])*d1Val*g0Val*sqrt(t1v/pi);
+                    if (!std::isnan(val) && !std::isinf(val))
+                    {
+                        l[celli] += max(0.0, val);
+                    }
+                }
+                else
+                {
+                    const scalar m1Val = rho1[celli]*pi*(d1Val*d1Val*d1Val)/6.0;
+                    const scalar m2Val = phase2.rho()[celli]*pi*(d2Val*d2Val*d2Val)/6.0;
+                    const scalar mTot = m1Val + m2Val;
+                    if (mTot > small)
+                    {
+                        const scalar w1 = m1Val/mTot;
+                        const scalar w2 = m2Val/mTot;
+                        const scalar num = 2.0*sqr(w1*t1v + w2*t2v);
+                        const scalar den = pi*t1v*t2v*(sqr(w1)*t1v + sqr(w2)*t2v);
+                        if (den > 1e-20 && num >= 0.0)
+                        {
+                            const scalar PsVal = 4.0*eta*alpha1[celli]*alpha2[celli]*rho1[celli]*t1v*g0Val;
+                            const scalar ratio = num/den;
+                            if (ratio > 0.0 && !std::isnan(ratio) && !std::isinf(ratio))
+                            {
+                                const scalar val = (PsVal/rho1[celli]) * ((d1Val + d2Val)/6.0) * sqrt(ratio);
+                                if (!std::isnan(val) && !std::isinf(val))
+                                {
+                                    l[celli] += max(0.0, val);
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
     }
+    l.correctBoundaryConditions();
     return tmpLambda;
 }
 
@@ -551,7 +598,7 @@ Foam::kineticTheorySystem::productionSource
         (
             81.0*phase1*sqr(phase2.mu())*magSqr(phase1.U() - phase2.U())
            /(
-                kt.gs0()*pow3(phase1.d())
+                kt.gs0()*pow3(max(phase1.d(), dimensionedScalar(dimLength, 1e-10)))
                *phase1.rho()
                *sqrt(Foam::constant::mathematical::pi)
             )
@@ -590,7 +637,7 @@ Foam::kineticTheorySystem::dissipationSource
                *(1.0 - sqr(kt.es()))
                *kt.gs0()
                *phase1*phase1.alphaRho()
-               /(phase1.d()*sqrt(pi))
+               /(max(phase1.d(), dimensionedScalar(dimLength, 1e-10))*sqrt(pi))
             )
         );
         tmp<volScalarField> ThetaStar
@@ -603,7 +650,7 @@ Foam::kineticTheorySystem::dissipationSource
                     max
                     (
                         3.0*phase1.alphaRho()
-                      + deltaT*gammaCoeff*sqrt(kt.Theta()),
+                      + deltaT*gammaCoeff*sqrt(max(kt.Theta(), dimensionedScalar(sqr(dimVelocity), small))),
                         3.0*phase1.residualAlphaRho()
                     )
                 )
@@ -634,8 +681,8 @@ Foam::kineticTheorySystem::dissipationSource
     volScalarField Theta2(phase2.Theta());
     Theta2.max(1e-10);
 
-    tmp<volScalarField> m1(pi/6.0*pow3(phase1.d())*phase1.rho());
-    tmp<volScalarField> m2(pi/6.0*pow3(phase2.d())*phase2.rho());
+    tmp<volScalarField> m1(pi/6.0*pow3(max(phase1.d(), dimensionedScalar(dimLength, 1e-10)))*phase1.rho());
+    tmp<volScalarField> m2(pi/6.0*pow3(max(phase2.d(), dimensionedScalar(dimLength, 1e-10)))*phase2.rho());
     tmp<volScalarField> m0(m1() + m2());
     tmp<volScalarField> m1Thetam2Theta(sqr(m1())*Theta1 + sqr(m2())*Theta2);
 
@@ -647,8 +694,11 @@ Foam::kineticTheorySystem::dissipationSource
                 3.0/phase1.d()
                *sqrt
                 (
-                    2.0*sqr(m0())*phase1.Theta()*phase2.Theta()
-                   /(pi*m1Thetam2Theta())
+                    max
+                    (
+                        2.0*sqr(m0())*Theta1*Theta2/(pi*m1Thetam2Theta()),
+                        dimensionedScalar(sqr(dimVelocity), small)
+                    )
                 )
               - (3.0*m0()*(m1()*phase1.Theta() + m2()*phase2.Theta()))
                /(4.0*m1Thetam2Theta())

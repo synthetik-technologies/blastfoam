@@ -1,0 +1,3 @@
+Test-blastEquilibrium.C
+
+EXE = $(BLAST_APPBIN)/Test-blastEquilibrium

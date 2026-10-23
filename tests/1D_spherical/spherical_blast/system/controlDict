@@ -1,0 +1,110 @@
+/*--------------------------------*- C++ -*----------------------------------*\
+  | =========                 |                                                 |
+  | \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox           |
+  |  \\    /   O peration     | Version:  2.3.0                                 |
+  |   \\  /    A nd           | Web:      www.OpenFOAM.org                      |
+  |    \\/     M anipulation  |                                                 |
+  \*---------------------------------------------------------------------------*/
+FoamFile
+{
+  version     2.0;
+  format      ascii;
+  class       dictionary;
+  location    "system";
+  object      controlDict;
+}
+// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
+
+application     blastFoam;
+
+startFrom       startTime;
+
+startTime       0;
+
+stopAt          endTime;
+
+endTime         0.005;
+
+writeControl    adjustableRunTime;
+
+writeInterval   0.0005;
+
+writeFormat     binary;
+
+writePrecision  12;
+
+writeCompression off;
+
+timeFormat      general;
+
+timePrecision   6;
+
+runTimeModifiable true;
+
+adjustTimeStep  yes;
+
+deltaT          1e-8;
+
+maxCo           0.5;
+
+// ************************************************************************* //
+
+
+functions
+{
+    impulse
+    {
+        type            impulse;
+        writeControl    writeTime;
+        writeInterval   1;
+
+        pRef            101298;
+    }
+
+    pressureProbes
+    {
+        type           blastProbes;
+        writeControl   timeStep;
+        writeInterval  1;
+        adjustLocations yes;
+
+        probeLocations
+        (
+            (0.5 0 1.0)
+            (1.0 0 1.0)
+            (1.5 0 1.0)
+            (2.0 0 1.0)
+            (3.0 0 1.0)
+            (4.0 0 1.0)
+            (5.0 0 1.0)
+        );
+        fields
+        (
+            p
+            impulse
+        );
+    }
+
+    radialPeakPressure
+    {
+        type            temporalMax;
+        libs            ("libblastFunctionObjects.so");
+        field           p;
+        centre          (0 0 1.0);
+        writeControl    writeTime;
+        outputRadial    true;
+    }
+
+    radialImpulse
+    {
+        type            temporalIntegral;
+        libs            ("libblastFunctionObjects.so");
+        field           p;
+        pRef            101298;
+        positiveOnly    true;
+        centre          (0 0 1.0);
+        writeControl    writeTime;
+        outputRadial    true;
+    }
+}
+

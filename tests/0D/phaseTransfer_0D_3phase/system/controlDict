@@ -1,0 +1,153 @@
+
+/*--------------------------------*- C++ -*----------------------------------*\
+  =========                 |
+  \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox
+   \\    /   O peration     | Website:  https://openfoam.org
+    \\  /    A nd           | Version:  12
+     \\/     M anipulation  |
+\*---------------------------------------------------------------------------*/
+FoamFile
+{
+    version     2.0;
+    format      ascii;
+    class       dictionary;
+    location    "system";
+    object      controlDict;
+}
+// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
+
+
+DebugSwitches
+{
+    NewtonRaphson 2;
+}
+
+application     blastEulerFoam;
+
+startFrom       startTime;
+
+startTime       0;
+
+stopAt          endTime;
+
+endTime         1e-4;
+
+libs            ( "libblastFiniteVolume.so" );
+
+writeControl    timeStep;
+
+writeInterval   20;
+
+writeFormat     ascii;
+
+writePrecision  8;
+
+writeCompression off;
+
+timeFormat      general;
+
+timePrecision   6;
+
+runTimeModifiable true;
+
+adjustTimeStep  no;
+
+deltaT          5e-7;
+
+maxCo           0.5;
+
+functions
+{
+    massCompBAl
+    {
+        type            volFieldValue;
+        libs            (fieldFunctionObjects);
+        select          all;
+        operation       volIntegrate;
+        fields          (alphaRho.compBAl);
+        writeFields     false;
+        writeControl    timeStep;
+        writeInterval   1;
+        log             true;
+    }
+
+    massGas
+    {
+        type            volFieldValue;
+        libs            (fieldFunctionObjects);
+        select          all;
+        operation       volIntegrate;
+        fields          (alphaRho.gas);
+        writeFields     false;
+        writeControl    timeStep;
+        writeInterval   1;
+        log             true;
+    }
+
+    massAl
+    {
+        type            volFieldValue;
+        libs            (fieldFunctionObjects);
+        select          all;
+        operation       volIntegrate;
+        fields          (alphaRho.Al);
+        writeFields     false;
+        writeControl    timeStep;
+        writeInterval   1;
+        log             true;
+    }
+
+    totalEnergy
+    {
+        type            volFieldValue;
+        libs            (fieldFunctionObjects);
+        select          all;
+        operation       volIntegrate;
+        fields          (alphaRhoE.Al alphaRhoE.compBAl alphaRhoE.gas);
+        writeFields     false;
+        writeControl    timeStep;
+        writeInterval   1;
+        log             true;
+    }
+
+    momentum
+    {
+        type            volFieldValue;
+        libs            (fieldFunctionObjects);
+        select          all;
+        operation       volIntegrate;
+        fields          (alphaRhoU.Al alphaRhoU.compBAl alphaRhoU.gas);
+        writeFields     false;
+        writeControl    timeStep;
+        writeInterval   1;
+        log             true;
+    }
+
+    pressure
+    {
+        type            volFieldValue;
+        libs            (fieldFunctionObjects);
+        select          all;
+        operation       volAverage;
+        fields          (p);
+        writeFields     false;
+        writeControl    timeStep;
+        writeInterval   1;
+        log             true;
+    }
+
+    temperature
+    {
+        type            volFieldValue;
+        libs            (fieldFunctionObjects);
+        select          all;
+        operation       volAverage;
+        fields          (T.Al T.compBAl T.gas);
+        writeFields     false;
+        writeControl    timeStep;
+        writeInterval   1;
+        log             true;
+    }
+}
+
+// ************************************************************************* //

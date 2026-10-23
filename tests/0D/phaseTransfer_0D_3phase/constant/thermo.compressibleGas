@@ -1,0 +1,315 @@
+/*--------------------------------*- C++ -*----------------------------------*\
+  =========                 |
+  \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox
+   \\    /   O peration     | Website:  https://openfoam.org
+    \\  /    A nd           | Version:  dev
+     \\/     M anipulation  |
+\*---------------------------------------------------------------------------*/
+
+species
+(
+    O2
+    N2
+    CO
+    H2O
+    CO2
+    NH3
+    CH4
+    C2H6
+    C(gr)
+    Al2O3(s)
+    H2
+);
+
+O2
+{
+    specie
+    {
+        molWeight       31.9988;
+    }
+    equationOfState
+    {
+        b               9.9432e-04;
+        Tc              154.6;
+        Pc              5.050e6;
+    }
+    thermodynamics
+    {
+        Tlow            200;
+        Thigh           5000;
+        Tcommon         1000;
+        highCpCoeffs    ( 3.69758 0.00061352 -1.25884e-07 1.77528e-11 -1.13644e-15 -1233.93 3.18917 );
+        lowCpCoeffs     ( 3.21294 0.00112749 -5.75615e-07 1.31388e-09 -8.76855e-13 -1005.25 6.03474 );
+    }
+    transport
+    {
+        As              1.753e-6;
+        Ts              139;
+    }
+}
+
+N2
+{
+    specie
+    {
+        molWeight       28.0134;
+    }
+    equationOfState
+    {
+        b               1.3811e-03;
+        Tc              126.2;
+        Pc              3.390e6;
+    }
+    thermodynamics
+    {
+        Tlow            200;
+        Thigh           5000;
+        Tcommon         1000;
+        highCpCoeffs    ( 2.92664 0.00148798 -5.68476e-07 1.0097e-10 -6.75335e-15 -922.798 5.98053 );
+        lowCpCoeffs     ( 3.29868 0.00140824 -3.96322e-06 5.64152e-09 -2.44486e-12 -1020.9 3.95037 );
+    }
+    transport
+    {
+        As              1.401e-6;
+        Ts              107;
+    }
+}
+
+CO
+{
+    specie
+    {
+        molWeight       28.0101;
+    }
+    equationOfState
+    {
+        b               1.4116e-03;
+        Tc              132.86;
+        Pc              3.494e6;
+    }
+    thermodynamics
+    {
+        Tlow            200;
+        Thigh           5000;
+        Tcommon         1000;
+        highCpCoeffs    ( 2.71519 0.00206253 -9.98826e-07 2.30053e-10 -2.03644e-14 -14151.9 7.81869 );
+        lowCpCoeffs     ( 3.57953 -0.000610354 1.01681e-06 9.07006e-10 -9.0943e-13 -14344.1 3.50841 );
+    }
+    transport
+    {
+        As              1.472e-6;
+        Ts              118;
+    }
+}
+
+H2O
+{
+    specie
+    {
+        molWeight       18.0153;
+    }
+    equationOfState
+    {
+        b               1.6923e-03;
+        Tc              647.096;
+        Pc              22.060e6;
+    }
+    thermodynamics
+    {
+        Tlow            200;
+        Thigh           5000;
+        Tcommon         1000;
+        highCpCoeffs    ( 2.67215 0.00305629 -8.73026e-07 1.201e-10 -6.39162e-15 -29899.2 6.86282 );
+        lowCpCoeffs     ( 3.38684 0.00347498 -6.3547e-06 6.96858e-09 -2.50659e-12 -30208.1 2.59023 );
+    }
+    transport
+    {
+        As              2.978e-7;
+        Ts              1064;
+    }
+}
+
+CO2
+{
+    specie
+    {
+        molWeight       44.01;
+    }
+    equationOfState
+    {
+        b               9.7338e-04;
+        Tc              304.19;
+        Pc              7.380e6;
+    }
+    thermodynamics
+    {
+        Tlow            200;
+        Thigh           5000;
+        Tcommon         1000;
+        highCpCoeffs    ( 4.45362 0.00314017 -1.27841e-06 2.394e-10 -1.66903e-14 -48967 -0.955396 );
+        lowCpCoeffs     ( 2.27572 0.00992207 -1.04091e-05 6.86669e-09 -2.11728e-12 -48373.1 10.1885 );
+    }
+    transport
+    {
+        As              1.503e-6;
+        Ts              222;
+    }
+}
+
+NH3
+{
+    specie
+    {
+        molWeight       17.0305;
+    }
+    equationOfState
+    {
+        b               2.1818e-03;
+        Tc              405.4;
+        Pc              11.333e6;
+    }
+    thermodynamics
+    {
+        Tlow            200;
+        Thigh           5000;
+        Tcommon         1000;
+        highCpCoeffs    ( 2.63405 0.00566662 -1.72864e-06 2.47498e-10 -1.34833e-14 -6024.97 7.07054 );
+        lowCpCoeffs     ( 4.28603 -0.00466783 2.97157e-05 -2.85307e-08 8.62002e-12 -6568.44 -0.560618 );
+    }
+    transport
+    {
+        As              1.391e-6;
+        Ts              369;
+    }
+}
+
+CH4
+{
+    specie
+    {
+        molWeight       16.0428;
+    }
+    equationOfState
+    {
+        b               2.6639e-03;
+        Tc              190.8;
+        Pc              4.640e6;
+    }
+    thermodynamics
+    {
+        Tlow            200;
+        Thigh           6000;
+        Tcommon         1000;
+        highCpCoeffs    ( 1.63543 0.0100844 -3.36924e-06 5.34973e-10 -3.15528e-14 -10005.6 9.9937 );
+        lowCpCoeffs     ( 5.14988 -0.013671 4.91801e-05 -4.84744e-08 1.66694e-11 -10246.6 -4.64132 );
+    }
+    transport
+    {
+        As              1.0194e-06;
+        Ts              171.06;
+    }
+}
+
+C2H6
+{
+    specie
+    {
+        molWeight       30.069;
+    }
+    equationOfState
+    {
+        b               2.1648e-03;
+        Tc              305.3;
+        Pc              4.872e6;
+    }
+    thermodynamics
+    {
+        Tlow            200;
+        Thigh           5000;
+        Tcommon         1000;
+        highCpCoeffs    ( 3.96781 0.0121045 -4.24945e-06 6.84024e-10 -4.10309e-14 -11728.8 1.63666 );
+        lowCpCoeffs     ( 4.29142 -0.00550154 5.99438e-05 -7.08466e-08 2.68686e-11 -11522 -0.024941 );
+    }
+    transport
+    {
+        As              0.948e-6;
+        Ts              252;
+    }
+}
+
+C(gr)
+{
+    specie
+    {
+        molWeight       12.011;
+    }
+    equationOfState
+    {
+        b               4.545e-04;
+    }
+    thermodynamics
+    {
+        Tlow            200;
+        Thigh           5000;
+        Tcommon         1000;
+        highCpCoeffs    ( 1.45572 0.00171702 -6.95648e-07 1.35277e-10 -9.67591e-15 -695.138 -8.52583 );
+        lowCpCoeffs     ( -0.31082 0.00440354 1.90394e-06 -6.38547e-09 2.98964e-12 -108.65 -1.70285 );
+    }
+    transport
+    {
+        As              1.0e-6;
+        Ts              100;
+    }
+}
+
+Al2O3(s)
+{
+    specie
+    {
+        molWeight       101.96;
+    }
+    equationOfState
+    {
+        b               2.513e-04;
+    }
+    thermodynamics
+    {
+        Tlow            200;
+        Thigh           5000;
+        Tcommon         1000;
+        highCpCoeffs    ( 12.7937 0.00262194 -8.5447e-07 1.25866e-10 -6.81566e-15 -207238 -64.4442 );
+        lowCpCoeffs     ( -1.82115 0.0543666 -6.21334e-05 3.32185e-08 -6.74907e-12 -202271 7.42065 );
+    }
+    transport
+    {
+        As              1.0e-6;
+        Ts              100;
+    }
+}
+
+H2
+{
+    specie
+    {
+        molWeight       2.01588;
+    }
+    equationOfState
+    {
+        b               7.7e-04;
+    }
+    thermodynamics
+    {
+        Tlow            200;
+        Thigh           6000;
+        Tcommon         1000;
+        highCpCoeffs    ( 3.33728 -4.94025e-05 4.99457e-07 -1.79566e-10 2.00255e-14 -950.159 -3.20502 );
+        lowCpCoeffs     ( 2.34433 0.00798052 -1.94782e-05 2.01572e-08 -7.37612e-12 -917.935 0.68301 );
+    }
+    transport
+    {
+        As              1.0e-6;
+        Ts              100;
+    }
+}
+
+// ************************************************************************* //

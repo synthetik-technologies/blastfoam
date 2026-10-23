@@ -1,0 +1,60 @@
+Report planning notes
+---------------
+
+Concepts to be included in the report, in no particular order...
+
+Dispersed Multiphase Flow:
+ o Comparison Lagrangian vs Eulerian vs MP-PIC vs Population Balance Modelling
+ o Dispersed phase granular temperature modelling - necessary for this context? - modelling approaches
+ o Compressible vs incompressible solid phase effects
+ o Potential for implementing MUSIC or QMOM solvers in blastfoam?
+ 
+Aluminium Particle Burning:
+ o Surface heating and ignition modelling
+ o Surface burn rate, pressure dependency, Al oxide formation effects, dependence on surrounding composition
+ o Connection to the ideal detonation solver - particle heating, ignition during early phases (pre-CJ, early isentropic expansion)
+
+Initiation:
+ o Initialised from output of ideal detonation solver: detonation speed, energy release, JWLC equation of state parameters, CJ composition and freeze-out temperature composition
+ o Ideal solver currently assumes inert Al on isentrope and thermal equilibrium.
+ o Programmed burn at ideal detonation speed, JWLC equation of state for detonation products
+ o Potential to update 'ideal' solver to incorporate Al heating (and burning?) along isentrope to provide better initial condition for simulation? Data along isentrope is available
+ o Potential to use full equation of state (BKW/exp-6) in blastFoam to avoid two-stage initiation. 
+
+Numerical Multiphase Solver:
+ o Document and assess existing compressible multiphase solver in blastfoam
+ o Compare with approach in gunIB1D ~/Codes/gunIB1D on range of 1D test cases (Houim / Lowe) to determine whether blastfoam solver need improvment.
+ o Construct simple test cases for solver applied to 3 phases (JWL/gas/Al) to determine accuracy / find problems
+
+Afterburning Reaction Kinetics:
+ o Suitable chemical kinetic mechanism for reaction of combination of products, aluminium and air
+ o Importance of soot formation / aluminium oxide condensation?
+ 
+Literature Review / Articles to Consider: in report/external_sources
+
+
+Test cases to incorporate
+-------------------------
+
+- 0D
+ o Phase transfer from JWL to reacting multicomponent gas
+ o Phase transfer from Al to reacting multicomponent gas
+ o Constant pressure / constant volume aluminium combustion
+ o High temperature air thermodynamics (dissociations, high temperature Cp)
+ o Aluminium particle surface heating and ignition
+ 
+- 1D
+ o Shock wave in air comparable to blast, showing dissociation behind shock
+ o Simple 1D multiphase problems (interface advection, Riemann problem, shock bubble)
+ o Verification of planar ZND detonation in blastfoam, comparison to predicted profile from EuDetCode
+ o 1D spherically symmetric detonation. Two phase (JWL/gas) and three-phase (JWL/Al/gas).
+ o Investigation of effect of various chosen transfer conditions for phase transfer (JwL->gas) on results.
+ o Potentially 1D spherical detonation test with BKW / exp-6 phase for both products and air and switch from instant equilbirium above specified temperature / density to finite-rate chemistry at lower temperatures / densities?
+
+- 2D / 3D
+ o Multi-dimensional repeat of 1D spherical tests
+ o 2D axisymmetric cylindrical charge equivalents of 1D spherically symmetric tests. 
+ o Refined study of mixing/combustion at front between detonation products and air (and front between Al and air).
+ o Adaptive mesh refinement assessment.
+ o Comparison of Lagrangian particle / Eulerian
+ 

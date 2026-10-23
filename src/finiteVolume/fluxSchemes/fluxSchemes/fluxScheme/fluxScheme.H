@@ -167,7 +167,9 @@ public:
     // Selectors
 
         static autoPtr<fluxScheme> NewSingle(const surfaceScalarField& phi);
+        static autoPtr<fluxScheme> NewSingle(const surfaceScalarField& phi, const word& fluxSchemeType);
         static autoPtr<fluxScheme> NewMulti(const surfaceScalarField& phi);
+        static autoPtr<fluxScheme> NewMulti(const surfaceScalarField& phi, const word& fluxSchemeType);
         static autoPtr<fluxScheme> NewInterface(const surfaceScalarField& phi);
 
 

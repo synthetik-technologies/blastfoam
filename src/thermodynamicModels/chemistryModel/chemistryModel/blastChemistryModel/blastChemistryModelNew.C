@@ -31,14 +31,14 @@ License
 
 Foam::autoPtr<Foam::blastChemistryModel> Foam::blastChemistryModel::New
 (
-    const blastThermo& thermo
+    const multicomponentBlastThermo& thermo
 )
 {
     IOdictionary chemistryDict
     (
         IOobject
         (
-            IOobject::groupName("chemistryProperties", thermo.phaseName()),
+            IOobject::groupName("chemistryProperties", thermo.masterName()),
             thermo.mesh().time().constant(),
             thermo.mesh(),
             IOobject::MUST_READ,

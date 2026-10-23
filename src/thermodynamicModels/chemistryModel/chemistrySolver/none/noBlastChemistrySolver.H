@@ -62,7 +62,7 @@ public:
     // Constructors
 
         //- Construct from thermo
-        noBlastChemistrySolver(const blastThermo& thermo);
+        noBlastChemistrySolver(const multicomponentBlastThermo& thermo);
 
 
     //- Destructor

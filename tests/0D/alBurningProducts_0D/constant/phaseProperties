@@ -1,0 +1,176 @@
+/*--------------------------------*- C++ -*----------------------------------*\
+  =========                 |
+  \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox
+   \\    /   O peration     | Website:  https://openfoam.org
+    \\  /    A nd           | Version:  12
+     \\/     M anipulation  |
+\*---------------------------------------------------------------------------*/
+FoamFile
+{
+    format      ascii;
+    class       dictionary;
+    location    "constant";
+    object      phaseProperties;
+}
+// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
+
+phases          ( Al gas );
+
+transportPhaseDensity true;
+VRelaxation     instant;
+
+Al
+{
+    phaseType       granular;
+    diameterModel   reacting;
+    reactingDiameterCoeffs
+    {
+        d               D_PARTICLE;
+        reactionRate    Beckstead;
+        oxidiserPhase   gas;
+        Tign            TIGN;
+        // Burn to Al2O3 with the gas oxidisers (default reactions)
+        products        true;
+        Textinction     TEXTINCTION;
+        // Track the ignited fraction of the particles (true) or keep
+        // burning where d < d0 (false)
+        ignitedFraction IGNITEDFRACTION;
+        // The dilute cloud must not be reset to d0
+        alphaMin        1e-12;
+    }
+    alphaMax        0.63;
+    alphaMinFriction 0.5;
+    kineticTheoryCoeffs
+    {
+        e               0.999;
+    }
+    residualAlpha   1e-9;
+    residualRho     2700;
+}
+
+gas
+{
+    phaseType       fluid;
+    diameterModel   constant;
+    constantDiameterCoeffs
+    {
+        d               0;
+    }
+    residualRho     1e-06;
+    residualAlpha   1e-06;
+}
+
+blending
+{
+    default
+    {
+        type            none;
+        continuousPhase gas;
+    }
+}
+
+interfacialPressure
+(
+    (Al and gas)
+    {
+        type            single;
+        phase           gas;
+    }
+);
+
+interfacialVelocity
+(
+    (Al and gas)
+    {
+        type            single;
+        phase           Al;
+    }
+);
+
+// The burnt Al and the consumed oxidisers go to the gas as the reaction
+// products (Beckstead products true; no gas chemistry here)
+massTransfer
+(
+    (Al in gas)
+    {
+        type            reactingParticle;
+        productsFromReactionRate true;
+    }
+);
+
+aspectRatio
+(
+);
+
+solveDragODE off;
+
+// Loth (2008) compressible/rarefied sphere drag; gamma of the ideal gas
+drag
+(
+    (Al in gas)
+    {
+        type            Loth;
+        swarmCorrection
+        {
+            type            none;
+        }
+    }
+);
+
+virtualMass
+(
+);
+
+heatTransfer
+(
+    // Constant coefficient (KH, 0 except in the heating case)
+    (Al in gas)
+    {
+        type            constantCoefficient;
+        Kh              KH;
+    }
+);
+
+lift
+(
+);
+
+wallLubrication
+(
+);
+
+turbulentDispersion
+(
+);
+
+kineticTheory
+{
+    alphaMax            0.63;
+    residualAlpha       1e-8;
+    alphaMinFriction    0.5;
+    radialModel         SinclairJackson;
+    viscosityModel      none;
+    conductivityModel   Syamlal;
+    granularPressureModel Lun;
+    frictionalStressModel JohnsonJackson;
+    JohnsonJacksonCoeffs
+    {
+        alphaMinFriction        0.5;
+        Fr                      0.05;
+        eta                     2;
+        p                       5;
+        phi                     28.5;
+        alphaDeltaMin           0.05;
+    }
+}
+
+pressureRelaxationSolver
+{
+    type            none;
+}
+
+pressureRelaxation
+(
+);
+
+// ************************************************************************* //

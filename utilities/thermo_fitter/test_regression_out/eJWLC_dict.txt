@@ -1,0 +1,21 @@
+// eJWLC Equation of State with Reconciled E0
+equationOfState
+{
+    rho0            1820.00;
+    A               1.759060e+11;
+    B               1.401510e+09;
+    C               1.693500e+09;
+    R1              3.08087;
+    R2              0.57568;
+    omega           0.15360;
+    pMax            1e11;
+    Cv              1810.62;
+    T_CJ            5375.25;
+    rho_CJ          2398.40;
+    e0              303452.47; // Reconciled E0 datum
+}
+thermodynamics
+{
+    Cv              1810.62;
+    Hf              0;
+}

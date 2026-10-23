@@ -34,6 +34,7 @@ namespace phaseFluxSchemes
 {
     defineTypeNameAndDebug(HLL, 0);
     addToRunTimeSelectionTable(phaseFluxScheme, HLL, dictionary);
+    addToRunTimeSelectionTable(phaseFluxScheme, HLL, solid);
 }
 }
 

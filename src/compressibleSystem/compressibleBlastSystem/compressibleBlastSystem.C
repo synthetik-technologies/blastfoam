@@ -60,6 +60,13 @@ void Foam::compressibleBlastSystem::addSources
     compressibleSystem::addSources(rhoUSource, rhoESource);
 
     rhoESource -= thermoPtr_->ESource();
+
+    // Add energy source terms from fvModels
+    tmp<fvScalarMatrix> tEEqn = models().source(rhoEff(), const_cast<volScalarField&>(e_));
+    if (tEEqn.valid())
+    {
+        rhoESource.primitiveFieldRef() += tEEqn().source() / mesh().V().primitiveField();
+    }
 }
 
 

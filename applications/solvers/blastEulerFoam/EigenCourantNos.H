@@ -20,21 +20,19 @@
         }
         amaxSf += mag(fvc::flux(phases[phasei].U()));
 
-        scalarField sumAmaxSf
+        surfaceScalarField alphaAmaxSf(amaxSf*max(fvc::interpolate(phases[phasei]), scalar(0)));
+
+        scalarField sumAlphaAmaxSf
         (
-            fvc::surfaceSum(amaxSf)().primitiveField()
+            fvc::surfaceSum(alphaAmaxSf)().primitiveField()
         );
 
-        sumPhi +=
-            fvc::surfaceSum
-            (
-                amaxSf*fvc::interpolate(phases[phasei])
-            )().primitiveField();
+        sumPhi += sumAlphaAmaxSf;
 
         phaseCoNums[phasei] =
-            0.5*gMax(sumAmaxSf/V)*runTime.deltaTValue();
+            0.5*gMax(sumAlphaAmaxSf/V)*runTime.deltaTValue();
         meanPhaseCoNums[phasei] =
-            0.5*(gSum(amaxSf)/gSum(V))*runTime.deltaTValue();
+            0.5*(gSum(sumAlphaAmaxSf)/gSum(V))*runTime.deltaTValue();
     }
 
     scalar maxCoNum = 0.5*gMax(sumPhi/V)*runTime.deltaTValue();
@@ -56,7 +54,7 @@
             << ", max = " << phaseCoNums[phasei] << nl;
     }
     Info<< endl << decrIndent;
-    CoNum = max(phaseCoNums);//max(max(phaseCoNums), maxCoNum);
+    CoNum = maxCoNum;
 
     bool hasMassTransfer = false;
     forAll(phases, phasei)
@@ -100,16 +98,14 @@
                         totalMDot += fluid.mDot(phase, otherPhase);
                     }
                 }
+                volScalarField lossMDot(max(-totalMDot, dimensionedScalar(totalMDot.dimensions(), 0.0)));
                 scalar mDotCo =
-                    mag
+                    gMax
                     (
-                        gMaxMagSqr
                         (
-                            (
-                                totalMDot*runTime.deltaTValue()
-                               /max(phase.alphaRho(), phase.residualAlphaRho())
-                            )()
-                        )
+                            lossMDot*runTime.deltaTValue()
+                           /max(phase.alphaRho(), phase.residualAlphaRho())
+                        )()
                     );
                 Info<< indent << phase.name() << ": " << mDotCo << nl;
                 mDotCoNum = max(mDotCoNum, mDotCo);

@@ -1,0 +1,35 @@
+/*--------------------------------*- C++ -*----------------------------------*\
+  =========                 |
+  \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox
+   \\    /   O peration     | Website:  https://openfoam.org
+    \\  /    A nd           | Version:  12
+     \\/     M anipulation  |
+\*---------------------------------------------------------------------------*/
+FoamFile
+{
+    format      ascii;
+    class       dictionary;
+    location    "constant";
+    object      physicalProperties.gas;
+}
+// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
+
+type            reacting;
+thermoType
+{
+    transport       sutherland;
+    thermo          janaf;
+    equationOfState AbelNobel;
+}
+
+#include "thermo.compressibleGas"
+// Decode temperature cap. Above the JANAF fit range (5000 K) the gas
+// properties are extrapolated with constant Cp (no dissociation), up to
+// the extrapolation limit of 10 x 5000 K
+THigh           50000;
+defaultSpecie   N2;
+
+residualRho     1e-06;
+residualAlpha   1e-06;
+
+// ************************************************************************* //

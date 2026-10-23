@@ -25,10 +25,11 @@ derived/detonatingFluidBlastThermo/detonatingPhaseFluidBlastThermos.C
 derived/detonatingSolidBlastThermo/detonatingSolidBlastThermos.C
 
 derived/multicomponentFluidBlastThermo/multicomponentFluidBlastThermos.C
-#derived/multicomponentFluidBlastThermo/multicomponentPhaseFluidBlastThermos.C
+derived/multicomponentFluidBlastThermo/multicomponentPhaseFluidBlastThermos.C
 derived/multicomponentSolidBlastThermo/multicomponentSolidBlastThermos.C
 
 derived/reactingFluidBlastThermo/reactingFluidBlastThermos.C
+derived/reactingPhaseFluidBlastThermo/reactingPhaseFluidBlastThermos.C
 derived/reactingSolidBlastThermo/reactingSolidBlastThermos.C
 
 derived/cavitatingFluidBlastThermo/cavitatingFluidBlastThermos.C
@@ -69,6 +70,7 @@ activationModels/activationModel/activationModelNew.C
 activationModels/none/noneActivation.C
 activationModels/linear/linearActivation.C
 activationModels/programmedIgnition/programmedIgnitionActivation.C
+activationModels/nodeProgrammed/nodeProgrammedActivation.C
 activationModels/ArrheniusRate/ArrheniusRateActivation.C
 activationModels/pressureBased/pressureBasedActivation.C
 activationModels/reactionRate/reactionRateActivation.C
@@ -113,5 +115,7 @@ ${saturationTemperature}/saturationTemperature/saturationTemperatureModelNew.C
 ${saturationTemperature}/constant/constantSaturationTemperatureModel.C
 ${saturationTemperature}/function/functionSaturationTemperatureModel.C
 ${saturationTemperature}/polynomial/polynomialSaturationTemperatureModel.C
+
+fvModels/pressurePhaseChange/pressurePhaseChange.C
 
 LIB = $(BLAST_LIBBIN)/libblastThermodynamics

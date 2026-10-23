@@ -415,6 +415,7 @@ public:
 
 
         // Specie thermo properties
+            virtual const volScalarField& p() const { return BasicThermo::p(); }
 
             using BasicThermo::rho;
 
@@ -666,8 +667,35 @@ public:
         //- Return the name of the thermo physics
         virtual word thermoName() const
         {
-            return ThermoType::typeName();
+            return BasicThermo::typeName + "<" + ThermoType::typeName() + ">";
         }
+
+        //- Return temperature [K]
+        virtual const volScalarField& T() const { return BasicThermo::T(); }
+
+        //- Return density [kg/m^3]
+        virtual tmp<volScalarField> rho() const { return BasicThermo::rho(); }
+
+        //- Return internal energy/enthalpy [J/kg]
+        virtual const volScalarField& he() const { return BasicThermo::he(); }
+
+        //- Return heat capacity at constant pressure [J/kg/K]
+        virtual const volScalarField& CpRef() const { return BasicThermo::CpRef(); }
+
+        //- Return heat capacity at constant pressure [J/kg/K]
+        virtual volScalarField& CpRef() { return BasicThermo::CpRef(); }
+
+        //- Return heat capacity at constant volume [J/kg/K]
+        virtual const volScalarField& CvRef() const { return BasicThermo::CvRef(); }
+
+        //- Return heat capacity at constant volume [J/kg/K]
+        virtual volScalarField& CvRef() { return BasicThermo::CvRef(); }
+
+        //- Return thermal conductivity [W/m/K]
+        virtual const volScalarField& kappaRef() const { return BasicThermo::kappaRef(); }
+
+        //- Return thermal conductivity [W/m/K]
+        virtual volScalarField& kappaRef() { return BasicThermo::kappaRef(); }
 
         //- Return the table of thermos
         inline const PtrList<ThermoType>& specieThermos() const;

@@ -1,9 +1,12 @@
 /*---------------------------------------------------------------------------*\
   =========                 |
   \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox
-   \\    /   O peration     |
-    \\  /    A nd           | Copyright (C) 2019-2025
+   \\    /   O peration     | Website:  https://openfoam.org
+    \\  /    A nd           | Copyright (C) 2011-2020 OpenFOAM Foundation
      \\/     M anipulation  | Synthetik Applied Technologies
+-------------------------------------------------------------------------------
+2020-04-02 Jeff Heylmun:    Modified class for a density based multiphase
+                            system
 -------------------------------------------------------------------------------
 License
     This file is derivative work of OpenFOAM.
@@ -24,25 +27,28 @@ License
 \*---------------------------------------------------------------------------*/
 
 #include "twoPhaseCompressibleSystem.H"
+#include "twoPhaseFluidBlastThermo.H"
+#include "fvc.H"
+#include "fvm.H"
+#include "MULES.H"
 #include "addToRunTimeSelectionTable.H"
-#include "MULES.C"
-#include "gaussConvectionScheme.H"
 
-// * * * * * * * * * * * * * * Static Data Members * * * * * * * * * * * * * //
+// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
 namespace Foam
 {
-    defineTypeNameAndDebug(twoPhaseCompressibleSystem, 0);
-    addToRunTimeSelectionTable
-    (
-        compressibleSystem,
-        twoPhaseCompressibleSystem,
-        twoPhase
-    );
-}
 
+// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
-// * * * * * * * * * * * * Protected Members Functions * * * * * * * * * * * * //
+defineTypeNameAndDebug(twoPhaseCompressibleSystem, 0);
+addToRunTimeSelectionTable
+(
+    compressibleSystem,
+    twoPhaseCompressibleSystem,
+    twoPhase
+);
+
+// * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
 
 void Foam::twoPhaseCompressibleSystem::updateFluxes
 (
@@ -139,45 +145,6 @@ void Foam::twoPhaseCompressibleSystem::solveMass()
 
     // Delta T value
     dimensionedScalar dT = rho_.time().deltaT();
-
-    // if (phaseChange_.valid())
-    // {
-    //     Pair<tmp<volScalarField::Internal>> mDots(phaseChange_->mDots());
-    //     Info<<min(mDots.first()()).dimensions()<<" "<<max(mDots.first()()).value()<<endl;
-    //     // Info<<min(alphaRho1_()/dT).value()<<" "<<max(alphaRho1_()/dT).value()<<endl;
-    //     Info<<min(mDots.second()()).dimensions()<<" "<<max(mDots.second()()).value()<<endl;
-    //     // Info<<min(alphaRho2_()/dT).value()<<" "<<max(alphaRho2_()/dT).value()<<endl;
-    //     // mDots.first().ref() = min(mDots.first()(), alphaRho2_()/dT);
-    //     // mDots.second().ref() = min(mDots.second()(), alphaRho1_()/dT);
-    //
-    //     volScalarField::Internal mDot
-    //     (
-    //         "mDot",
-    //         mDots.first()() - mDots.second()()
-    //         // min
-    //         // (
-    //         //     max
-    //         //     (
-    //         //         mDots.first()() - mDots.second()(),
-    //         //         -alphaRho1_()/dT
-    //         //     ),
-    //         //     alphaRho2_()/dT
-    //         // )
-    //     );
-    //     Info<<max(mDot).value()<<" "<<min(mDot).value()<<endl;
-    //
-    //     deltaAlphaRho1.ref() -= mDot;
-    //     deltaAlphaRho2.ref() += mDot;
-    //
-    //     volScalarField::Internal dAlpha
-    //     (
-    //         "dAlpha",
-    //         mDots.first()/max(rho2_(), thermo_.thermo(1).residualRho())
-    //       - mDots.second()/max(rho1_(), thermo_.thermo(0).residualRho())
-    //     );
-    //     Info<<max(dAlpha).value()<<" "<<min(dAlpha).value()<<endl;
-    //     deltaAlpha.ref() -= dAlpha;
-    // }
 
     // Blend old values
     this->storeAndBlendOld(alpha1_, false);
@@ -328,18 +295,6 @@ Foam::twoPhaseCompressibleSystem::twoPhaseCompressibleSystem
 
     thermo_.initializeModels();
     this->setModels();
-
-    // if (this->isDict("phaseChange"))
-    // {
-    //     phaseChange_ = phaseChangeModel::New
-    //     (
-    //         subDict("phaseChange"),
-    //         alpha1_,
-    //         thermo_.thermo(0),
-    //         alpha2_,
-    //         thermo_.thermo(1)
-    //     );
-    // }
 
 
     if
@@ -633,28 +588,63 @@ void Foam::twoPhaseCompressibleSystem::decode()
     const scalar rAlpha1(thermo_.thermo(0).residualAlpha().value());
     const scalar rAlpha2(thermo_.thermo(1).residualAlpha().value());
 
-    if (transportPhaseDensity_)
+    // Zero out phases below microscopic threshold to prevent EOS instability
+    // but keep nearly empty cells active for thermodynamic updates.
+    forAll(alpha1_, celli)
     {
-        // Update densities that have a valid volume fraction
-        forAll(alpha1_, celli)
+        if (alpha1_[celli] < 1e-15)
         {
-            const scalar alpha1 = alpha1_[celli];
-            if (alpha1 > rAlpha1)
-            {
-                rho1_[celli] = alphaRho1_[celli]/alpha1;
-            }
-            const scalar alpha2 = alpha2_[celli];
-            if (alpha2 > rAlpha2)
-            {
-                rho2_[celli] = alphaRho2_[celli]/alpha2_[celli];
-            }
+            alpha1_[celli] = 0.0;
+            alphaRho1_[celli] = 0.0;
+            rho1_[celli] = 0.0;
+        }
+        if (alpha2_[celli] < 1e-15)
+        {
+            alpha2_[celli] = 0.0;
+            alphaRho2_[celli] = 0.0;
+            rho2_[celli] = 0.0;
         }
     }
-    else
-    {
-        rho1_.internalFieldRef() = alphaRho1_()/max(alpha1_(), rAlpha1);
-        rho2_.internalFieldRef() = alphaRho2_()/max(alpha2_(), rAlpha2);
+    alpha2_ = 1.0 - alpha1_;
 
+    // Update densities that have a valid volume fraction
+    forAll(alpha1_, celli)
+    {
+        const scalar a1 = alpha1_[celli];
+        if (a1 > rAlpha1)
+        {
+            rho1_[celli] = alphaRho1_[celli]/a1;
+            
+            // Cap density to prevent EOS spikes in tiny volumes
+            if (a1 < 1e-2)
+            {
+                rho1_[celli] = min(rho1_[celli], 5000.0);
+            }
+        }
+        else
+        {
+            rho1_[celli] = 0.0;
+        }
+
+        const scalar a2 = alpha2_[celli];
+        if (a2 > rAlpha2)
+        {
+            rho2_[celli] = alphaRho2_[celli]/a2;
+
+            // Cap density to prevent EOS spikes in tiny volumes
+            if (a2 < 1e-2)
+            {
+                rho2_[celli] = min(rho2_[celli], 5000.0);
+            }
+        }
+        else
+        {
+            rho2_[celli] = 0.0;
+        }
+    }
+
+    if (!transportPhaseDensity_)
+    {
         fluxScheme::correctPhaseFields(alpha1_, rho1_, rAlpha1);
         fluxScheme::correctPhaseFields(alpha2_, rho2_, rAlpha2);
     }
@@ -692,5 +682,7 @@ void Foam::twoPhaseCompressibleSystem::clear()
     alphaRho1Advection_.clear();
     alphaRho2Advection_.clear();
 }
+
+} // End namespace Foam
 
 // ************************************************************************* //

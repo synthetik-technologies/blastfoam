@@ -43,6 +43,7 @@ SourceFiles
 #include "ODESystem.H"
 #include "volFields.H"
 #include "mixtureBlastThermo.H"
+#include "blastChemicalEquilibrium.H"
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
@@ -129,6 +130,22 @@ protected:
         //- Temperature below which the reaction rates are assumed 0
         scalar Treact_;
 
+        //- Local chemical equilibrium (optional sub-dictionary
+        //  equilibrium { Teq <T>; ... }): cells above Teq are set to the
+        //  equilibrium composition at their density and internal energy
+        //  (kept frozen where the solve fails or the equilibrium mixture is
+        //  outside its equation of state); the finite-rate mechanism is
+        //  used below Teq
+        autoPtr<blastChemicalEquilibrium<ThermoType>> equilibrium_;
+
+        //- Temperature above which the composition is in equilibrium
+        scalar Teq_;
+
+        //- Number of cells set to equilibrium and of failed solves in the
+        //  last solve
+        label nEquilibrium_;
+        label nEquilibriumFailed_;
+
         //- List of reaction rate per specie [kg/m^3/s]
         PtrList<volScalarField::Internal> RR_;
 
@@ -159,7 +176,7 @@ public:
     // Constructors
 
         //- Construct from thermo
-        standardBlastChemistryModel(const blastThermo& thermo);
+        standardBlastChemistryModel(const multicomponentBlastThermo& thermo);
 
         //- Disallow default bitwise copy construction
         standardBlastChemistryModel(const standardBlastChemistryModel&) = delete;

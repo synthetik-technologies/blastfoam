@@ -1,0 +1,10 @@
+#!/bin/sh
+cd "${0%/*}" || exit
+. "${WM_PROJECT_DIR:?}"/bin/tools/RunFunctions
+
+# Usage: Allrun <d> <p> <T> <Tp> <U> <alpha> <deltaT> <endTime>
+python3 setup_case.py --d "$1" --p "$2" --T "$3" --Tp "$4" --U "$5" \
+    --alpha "$6" --deltaT "$7" --endTime "$8" > log.setup_case 2>&1
+
+runApplication blockMesh
+runApplication $(getApplication)

@@ -64,7 +64,7 @@ void Foam::detonatingFluidBlastThermo<Thermo>::calculate()
             }
             else
             {
-                Ti = t1.TRhoE(Ti, rhoi, ei);
+                Ti = min(this->THigh(), max(this->TLow_, t1.TRhoE(Ti, rhoi, ei)));
             }
 
             const scalar pi = t1.p(rhoi, ei, Ti);
@@ -87,7 +87,7 @@ void Foam::detonatingFluidBlastThermo<Thermo>::calculate()
             }
             else
             {
-                Ti = t2.TRhoE(Ti, rhoi, ei);
+                Ti = min(this->THigh(), max(this->TLow_, t2.TRhoE(Ti, rhoi, ei)));
             }
 
             const scalar pi = t2.p(rhoi, ei, Ti);
@@ -113,14 +113,14 @@ void Foam::detonatingFluidBlastThermo<Thermo>::calculate()
             }
             else
             {
-                Ti =
-                    t1.TRhoE(Ti, rhoi, ei)*x1
-                  + t2.TRhoE(Ti, rhoi, ei)*x2;
+                const scalar CvMix =
+                    t1.Cv(rhoi, ei, Ti)*x1
+                  + t2.Cv(rhoi, ei, Ti)*x2;
+                Ti = min(this->THigh(), max(this->TLow_, this->TLow_ + (ei - eTest)/max(CvMix, small)));
             }
 
             const scalar pi =
-                t1.p(rhoi, ei, Ti)*x1
-              + t2.p(rhoi, ei, Ti)*x2;
+                t1.p(rhoi, ei, Ti)*x1 + t2.p(rhoi, ei, Ti)*x2;
 
             pCells[celli] = pi;
             CpCells[celli] =
@@ -136,10 +136,10 @@ void Foam::detonatingFluidBlastThermo<Thermo>::calculate()
                 t1.kappa(rhoi, ei, Ti)*x1
               + t2.kappa(rhoi, ei, Ti)*x2;
             speedOfSoundCells[celli] =
-                sqrt
+                min
                 (
-                    max(t1.cSqr(pi, rhoi, ei, Ti), small)*x1
-                  + max(t2.cSqr(pi, rhoi, ei, Ti), small)*x2
+                    sqrt(max(t1.cSqr(pi, rhoi, ei, Ti), small)),
+                    sqrt(max(t2.cSqr(pi, rhoi, ei, Ti), small))
                 );
         }
     }
@@ -254,7 +254,7 @@ void Foam::detonatingFluidBlastThermo<Thermo>::calculate()
                     }
                     else
                     {
-                        Ti = t1.TRhoE(Ti, rhoi, ei);
+                        Ti = min(this->THigh(), max(this->TLow_, t1.TRhoE(Ti, rhoi, ei)));
                     }
                     pCp[facei] = t1.Cp(rhoi, ei, Ti);
                     pCv[facei] = t1.Cv(rhoi, ei, Ti);
@@ -272,7 +272,7 @@ void Foam::detonatingFluidBlastThermo<Thermo>::calculate()
                     }
                     else
                     {
-                        Ti = t2.TRhoE(Ti, rhoi, ei);
+                        Ti = min(this->THigh(), max(this->TLow_, t2.TRhoE(Ti, rhoi, ei)));
                     }
                     pCp[facei] = t2.Cp(rhoi, ei, Ti);
                     pCv[facei] = t2.Cv(rhoi, ei, Ti);
@@ -292,9 +292,10 @@ void Foam::detonatingFluidBlastThermo<Thermo>::calculate()
                     }
                     else
                     {
-                        Ti =
-                            t1.TRhoE(Ti, rhoi, ei)*x1
-                          + t2.TRhoE(Ti, rhoi, ei)*x2;
+                        const scalar CvMix =
+                            t1.Cv(rhoi, ei, Ti)*x1
+                          + t2.Cv(rhoi, ei, Ti)*x2;
+                        Ti = min(this->THigh(), max(this->TLow_, this->TLow_ + (ei - eTest)/max(CvMix, small)));
                     }
                     pCp[facei] =
                         t1.Cp(rhoi, ei, Ti)*x1
@@ -309,10 +310,14 @@ void Foam::detonatingFluidBlastThermo<Thermo>::calculate()
                         t1.kappa(rhoi, ei, Ti)*x1
                       + t2.kappa(rhoi, ei, Ti)*x2;
                     pc[facei] =
-                        sqrt
+                        min
                         (
-                            max(t1.cSqr(pi, rhoi, ei, Ti), small)*x1
-                          + max(t2.cSqr(pi, rhoi, ei, Ti), small)*x2
+                            20000.0,
+                            sqrt
+                            (
+                                max(t1.cSqr(pi, rhoi, ei, Ti), small)*x1
+                              + max(t2.cSqr(pi, rhoi, ei, Ti), small)*x2
+                            )
                         );
                 }
             }
@@ -393,7 +398,7 @@ void Foam::detonatingFluidBlastThermo<Thermo>::calculate
                     )*alphai*rhoi;
 
                 Gamma =
-                    t1.Gamma(rhoi, ei, Ti)*x1 + t1.Gamma(rhoi, ei, Ti)*x2;
+                    t1.Gamma(rhoi, ei, Ti)*x1 + t2.Gamma(rhoi, ei, Ti)*x2;
                 pi = t1.p(rhoi, ei, Ti)*x1 + t2.p(rhoi, ei, Ti)*x2;
             }
             scalar Xii = alphai/Gamma;

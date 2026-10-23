@@ -270,6 +270,10 @@ protected:
         //- Mixture thermal diffusivity
         volScalarField kappa_;
 
+        //- Frozen mixture speed of sound of the fluid phases,
+        //  sqrt(sum(alphaRho_k c_k^2)/sum(alphaRho_k))
+        volScalarField cMix_;
+
         //- Gravitational acceleration
         const uniformDimensionedVectorField& g_;
 
@@ -302,6 +306,16 @@ protected:
 
             //- Pressure relaxation type
             PVRelaxation PRelaxation_;
+
+            //- Volume fraction below which a fluid phase is brought into
+            //  pressure equilibrium with the carrier fluid phase
+            //  (alphaDilute, default 0.01; 0 disables)
+            scalar alphaDilute_;
+
+            //- Volume fraction below which a side of a face takes the
+            //  mixture impedance in the HLLC flux of a fluid phase
+            //  (alphaTrace, default 0: off)
+            scalar alphaTrace_;
 
             //- Blending methods
             blendingMethodTable blendingMethods_;
@@ -449,6 +463,19 @@ public:
 
         //- Decode primative variables
         virtual void decode();
+
+        //- Bring dilute fluid phases (alpha < alphaDilute) towards pressure
+        //  equilibrium with the carrier fluid phase by exchanging volume,
+        //  with the p*dAlpha work exchanged between the two phases. Only the
+        //  volume fractions and total energies change, so mass, momentum and
+        //  total energy are conserved. Returns true if any cell changed.
+        bool equilibrateDiluteVolumes();
+
+        //- Instantaneous velocity relaxation of the fluid phases to their
+        //  mass-averaged velocity. Each phase keeps its internal energy and
+        //  is heated by its own dissipation, so total energy is conserved;
+        //  kinetic energy beyond the energy of a trace phase is not counted.
+        void relaxFluidVelocitiesInstant();
 
         //- Encode conserved variables
         virtual void encode();

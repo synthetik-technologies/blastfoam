@@ -82,6 +82,28 @@ protected:
     //- Saved interpolated alpha field
     tmp<surfaceScalarField> alphaf_;
 
+    // Mixture state used where the phase is a trace (see setMixture)
+
+        //- Volume fraction below which a side of a face takes the mixture
+        //  impedance (0: off)
+        scalar alphaTrace_;
+
+        //- Mixture density, frozen sound speed, velocity and pressure
+        const volScalarField* rhoMix_;
+        const volScalarField* cMix_;
+        const volVectorField* UMix_;
+        const volScalarField* pMix_;
+
+        //- Mixture state of the owner and neighbour of the current face
+        scalar rhoMixOwn_, rhoMixNei_;
+        scalar cMixOwn_, cMixNei_;
+        vector UMixOwn_, UMixNei_;
+        scalar pMixOwn_, pMixNei_;
+
+        //- Mixture state on the far side of the current patch
+        scalarField rhoMixPatch_, cMixPatch_, pMixPatch_;
+        vectorField UMixPatch_;
+
     //- Saved interpolated U field
     tmp<surfaceVectorField> Uf_;
 
@@ -119,6 +141,19 @@ protected:
         //- Update fields before calculating fluxes
         virtual void preUpdate(const volScalarField& p)
         {}
+
+        //- Is the mixture state of the current face set
+        bool mixtureValid() const
+        {
+            return alphaTrace_ > 0 && rhoMix_;
+        }
+
+        //- Set the mixture state on the far side of a patch
+        void setPatchMixture(const label patchi);
+
+        //- Set the mixture state of the current face (after
+        //  setPatchMixture for a boundary face)
+        void setFaceMixture(const label facei, const label patchi = -1);
 
         //- Correct fluxes
         virtual void postUpdate()
@@ -198,6 +233,21 @@ public:
 
         //- Allocate saved fields
         virtual void createSavedFields();
+
+        //- Set the mixture state. Where the phase volume fraction on a side
+        //  of a face is below alphaTrace, the wave speeds and the star
+        //  pressure of the Riemann problem use the mixture impedance on
+        //  that side (blended linearly in alpha/alphaTrace), so that a trace
+        //  of a dense phase does not act with its own impedance, e.g. at a
+        //  charge/air interface. Only used by HLLC.
+        void setMixture
+        (
+            const scalar alphaTrace,
+            const volScalarField& rhoMix,
+            const volScalarField& cMix,
+            const volVectorField& UMix,
+            const volScalarField& pMix
+        );
 
         //- Update
         void update

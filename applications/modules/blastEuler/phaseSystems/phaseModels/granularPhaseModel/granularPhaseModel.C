@@ -27,6 +27,8 @@ License
 
 #include "granularPhaseModel.H"
 #include "addToRunTimeSelectionTable.H"
+#include "ReconstructionScheme.H"
+#include "extrapolatedCalculatedFvPatchFields.H"
 
 // * * * * * * * * * * * * * * Static Data Members * * * * * * * * * * * * * //
 
@@ -110,6 +112,46 @@ Foam::tmp<Foam::volScalarField> Foam::granularPhaseModel::ESource() const
 }
 
 
+Foam::tmp<Foam::volScalarField> Foam::granularPhaseModel::eCold()
+{
+    tmp<volScalarField> teCold
+    (
+        volScalarField::New
+        (
+            IOobject::groupName("eCold", name_),
+            rho_.mesh(),
+            dimensionedScalar(dimEnergy/dimMass, 0.0),
+            extrapolatedCalculatedFvPatchScalarField::typeName
+        )
+    );
+    volScalarField& eCold = teCold.ref();
+
+    // Reference density of the equation of state (updateRho() without a
+    // pressure sets it; blastThermo::rho0() is the old-time density)
+    const volScalarField rhoCurrent(rho_);
+    thermoPtr_->updateRho();
+    const volScalarField rho0(rho_);
+    rho_ == rhoCurrent;
+
+    // Evaluate the internal energy at the reference density by setting the
+    // cell density temporarily (the thermo evaluates e from rho_)
+    forAll(eCold, celli)
+    {
+        const scalar rhoi = rho_[celli];
+        if (mag(rhoi - rho0[celli]) > small*rho0[celli])
+        {
+            const scalar e = thermoPtr_->cellhe(T_[celli], celli);
+            rho_[celli] = rho0[celli];
+            eCold[celli] = e - thermoPtr_->cellhe(T_[celli], celli);
+            rho_[celli] = rhoi;
+        }
+    }
+    eCold.correctBoundaryConditions();
+
+    return teCold;
+}
+
+
 void Foam::granularPhaseModel::solve()
 {
     dimensionedScalar dT = rho_.time().deltaT();
@@ -135,16 +177,16 @@ void Foam::granularPhaseModel::solve()
         fvc::div(alphaRhoPTEPhi_) + Ps_*fvc::div(phi_)
     );
 
+    // Buoyancy from the mixture fluid pressure. The pressures of the
+    // individual fluid phases are not defined where those phases are absent,
+    // so their gradients are not used.
+    deltaAlphaRhoU += (*this)*fvc::grad(fluid_.p());
+
     forAll(fluid_.phases(), phasei)
     {
         const phaseModel& otherPhase = fluid_.phases()[phasei];
         if (&otherPhase != this)
         {
-            if (!otherPhase.slavePressure())
-            {
-                deltaAlphaRhoU += (*this)*otherPhase.gradP();
-            }
-
             if (fluid_.hasMassTransfer(*this, otherPhase))
             {
                 deltaAlphaRhoU -= fluid_.mDotU(*this, otherPhase);
@@ -181,7 +223,7 @@ void Foam::granularPhaseModel::solve()
 
     //- Update volume fraction since density is known
     alphaRho_.max(0.0);
-    this->internalFieldRef() = alphaRho_()/rho_();
+    this->internalFieldRef() = Foam::min(alphaMax_, alphaRho_()/rho_());
 
     //- Solve thermodynamics to get energy production
     thermoPtr_->solve();
@@ -247,14 +289,17 @@ void Foam::granularPhaseModel::solveImplicit()
         constraints().constrain(alpha);
     }
 
+    // Implicit equations as corrections to the current state, with
+    // incremental updates of the conserved fields (as fluidPhaseModel)
+    const dimensionedScalar dT(rho().time().deltaT());
+
     if (needSolve(rho().name()))
     {
-        //- Solve momentum equation (implicit stresses)
+        const volScalarField rhoCur(rho());
+        const volScalarField alphaStab(alpha + residualAlpha());
         fvScalarMatrix rhoEqn
         (
-            fvm::ddt(alpha, rho()) - alphaRhoAdvection_()
-          + fvm::ddt(residualAlpha(), rho())
-          - fvc::ddt(residualAlpha(), rho())
+            fvm::Sp(alphaStab/dT, rho()) - alphaStab*rhoCur/dT
          ==
             models().source(alpha, rho())
         );
@@ -262,18 +307,19 @@ void Foam::granularPhaseModel::solveImplicit()
         rhoEqn.solve();
         constraints().constrain(rho());
 
-        alphaRho_ = alpha*rho();
+        alphaRho_ += alpha*(rho() - rhoCur);
     }
 
     // Solve momentum
     if (needSolve(U_.name()) || this->includeViscosity())
     {
         //- Solve momentum equation (implicit stresses)
+        const volVectorField UCur(U_);
+        const volScalarField alphaRhoCur(alpha*rho());
+        const volScalarField alphaRhoStab(alphaRhoCur + this->residualAlphaRho());
         fvVectorMatrix UEqn
         (
-            fvm::ddt(alpha, rho(), U_) - alphaRhoUAdvection_()
-          + fvm::ddt(this->residualAlphaRho(), U_)
-          - fvc::ddt(this->residualAlphaRho(), U_)
+            fvm::Sp(alphaRhoStab/dT, U_) - alphaRhoStab*UCur/dT
          ==
             models().source(alpha, rho(), U_)
         );
@@ -288,17 +334,18 @@ void Foam::granularPhaseModel::solveImplicit()
         UEqn.solve();
         constraints().constrain(U_);
 
-        alphaRhoU_ = alphaRho_*U_;
+        alphaRhoU_ += alphaRhoCur*(U_ - UCur);
     }
 
     // Solve thermal energy
     if (needSolve(he().name()))
     {
+        const volScalarField heCur(he());
+        const volScalarField alphaRhoCur(alpha*rho());
+        const volScalarField alphaRhoStab(alphaRhoCur + this->residualAlphaRho());
         fvScalarMatrix eEqn
         (
-            fvm::ddt(alpha, rho(), he()) - alphaRhoEAdvection_()
-          + fvm::ddt(this->residualAlphaRho(), he())
-          - fvc::ddt(this->residualAlphaRho(), he())
+            fvm::Sp(alphaRhoStab/dT, he()) - alphaRhoStab*heCur/dT
         ==
             models().source(alpha, rho(), he())
         );
@@ -306,22 +353,19 @@ void Foam::granularPhaseModel::solveImplicit()
         eEqn.solve();
         constraints().constrain(he());
 
-        alphaRhoE_ = alphaRho_*he();
+        alphaRhoE_ += alphaRhoCur*(he() - heCur);
     }
 
     //- Solve granular temperature equation including solid stress and
     //  conductivity
     if (needSolve(Theta_.name()) || this->includeViscosity())
     {
+        const volScalarField ThetaCur(Theta_);
+        const volScalarField alphaRhoCur(alpha*rho());
+        const volScalarField alphaRhoStab(alphaRhoCur + this->residualAlphaRho());
         fvScalarMatrix ThetaEqn
         (
-            1.5
-           *(
-                fvm::ddt(alpha, rho(), Theta_)
-              + fvm::ddt(this->residualAlphaRho(), Theta_)
-              - fvc::ddt(this->residualAlphaRho(), Theta_)
-            )
-          - alphaRhoPTEAdvection_()
+            1.5*(fvm::Sp(alphaRhoStab/dT, Theta_) - alphaRhoStab*ThetaCur/dT)
          ==
             models().source(alpha, rho(), Theta_)
         );
@@ -360,12 +404,14 @@ void Foam::granularPhaseModel::solveImplicit()
         constraints().constrain(Theta_);
         Theta_.max(0);
 
-        alphaRhoPTE_ = 1.5*alphaRho_*Theta_;
+        alphaRhoPTE_ += 1.5*alphaRhoCur*(Theta_ - ThetaCur);
     }
 
     thermoPtr_->solveImplicit();
     surfTModel_->solveImplicit();
     dPtr_->solveImplicit();
+
+    this->decode();
 }
 
 
@@ -385,6 +431,28 @@ void Foam::granularPhaseModel::update()
         alphaRhoEPhi_
     );
 
+    //- Thermal energy flux. alphaRhoE is the thermal energy
+    //  alphaRho*(e - eCold), which is advected with the mass flux: the
+    //  kinetic energy is carried by the momentum equation and the
+    //  compression energy follows from the grain density (eCold), so the
+    //  total-energy flux of the Riemann solver is not used.
+    {
+        const volScalarField eTh
+        (
+            IOobject::groupName("eTh", name_),
+            e_ - eCold()
+        );
+        tmp<surfaceScalarField> teThOwn, teThNei;
+        ReconstructionScheme<scalar>::New(eTh, "e", name_, true)
+            ->interpolateOwnNei(teThOwn, teThNei);
+        alphaRhoEPhi_ =
+            alphaRhoPhi_
+           *(
+                pos0(alphaRhoPhi_)*teThOwn()
+              + neg(alphaRhoPhi_)*teThNei()
+            );
+    }
+
     //- Calculate PTE flux by using Riemann flux scheme to interpolate
     //  granular energy
     alphaRhoPTEPhi_ =
@@ -398,12 +466,12 @@ void Foam::granularPhaseModel::update()
 
 void Foam::granularPhaseModel::scaleVolumeFraction
 (
-    const scalar sumAlpha,
+    const scalar scale,
     const label celli
 )
 {
-    (*this)[celli] /= sumAlpha;
-    alphaRho_[celli] /= sumAlpha;
+    (*this)[celli] *= scale;
+    alphaRho_[celli] = (*this)[celli]*rho_[celli];
 }
 
 
@@ -420,55 +488,135 @@ void Foam::granularPhaseModel::correctVolumeFraction
 void Foam::granularPhaseModel::decode()
 {
     const fvConstraints& constraints = this->constraints();
-    const volScalarField& alpha = *this;
+    volScalarField& alpha = *this;
 
-    //- Correct phase mass at boundaries
-    alphaRho_ = alpha*rho_;
-    // alphaRho_.correctBoundaryConditions();
-    // alphaRho_.boundaryFieldRef() ==
-    //     alpha.boundaryField()*rho_.boundaryField();
+    const scalar rAlpha = residualAlpha().value();
+    const scalar rAlphaRho = residualAlphaRho().value();
 
-    //- Store limited phase mass (only used for division)
-    volScalarField alphaRhoLimited(Foam::max(alpha, residualAlpha())*rho_);
+    // The conserved variables (alphaRho, alphaRhoU, alphaRhoE, alphaRhoPTE)
+    // are only modified where the phase is residual. Bounds applied
+    // elsewhere act on the primitive variables only, so the decode does
+    // not create or destroy mass, momentum or energy.
 
-    //- Calculate velocity from momentum
-    U_.internalFieldRef() = alphaRhoU_()/alphaRhoLimited();
+    //- Update grain material density from fluid mixture pressure and EOS
+    const volScalarField& pFluid = fluid_.p();
+    thermoPtr_->updateRho(pFluid);
+    rho_.max(thermo().residualRho());
+
+    //- Update volume fraction from the compressed grain density. Where the
+    //  packing limit alphaMax is reached, the grain density follows from
+    //  the conserved mass instead of the mass being reduced.
+    forAll(alpha, celli)
+    {
+        if (alphaRho_[celli] > 0.0)
+        {
+            alpha[celli] = alphaRho_[celli]/rho_[celli];
+            if (alpha[celli] > alphaMax_)
+            {
+                alpha[celli] = alphaMax_;
+                rho_[celli] = alphaRho_[celli]/alphaMax_;
+            }
+        }
+        else
+        {
+            alpha[celli] = 0.0;
+            alphaRho_[celli] = 0.0;
+        }
+    }
+    alpha.correctBoundaryConditions();
+    rho_.correctBoundaryConditions();
+    alphaRho_.boundaryFieldRef() == alpha.boundaryField()*rho_.boundaryField();
+
+    //- Calculate velocity from momentum, bounded for robustness
+    const scalar UMax = 20000.0;
+    forAll(U_, celli)
+    {
+        if (alpha[celli] > rAlpha && alphaRho_[celli] > rAlphaRho)
+        {
+            const vector UDecoded = alphaRhoU_[celli]/alphaRho_[celli];
+            const scalar magU = mag(UDecoded);
+            U_[celli] = magU > UMax ? (UMax/magU)*UDecoded : UDecoded;
+        }
+        else
+        {
+            U_[celli] = Zero;
+            alphaRhoU_[celli] = Zero;
+        }
+    }
     if (constraints.constrainsField(U_.name()))
     {
         constraints.constrain(U_);
     }
     U_.correctBoundaryConditions();
+    alphaRhoU_.boundaryFieldRef() ==
+        alphaRho_.boundaryField()*U_.boundaryField();
 
-    //- Correct momentum at boundaries
-    alphaRhoU_ == alphaRho_*U_;
-    // alphaRhoU_.correctBoundaryConditions();
-    // alphaRhoU_.boundaryFieldRef() ==
-    //     alphaRho_.boundaryField()*U_.boundaryField();
-
-    //- Limit and update thermal energy
-    alphaRhoE_.max(0.0);
-    e_.internalFieldRef() = alphaRhoE_()/alphaRhoLimited();
-    constraints.constrain(e_);
+    //- Calculate the internal energy from the thermal energy and the cold
+    //  energy at the updated grain density, bounded by the thermo limits
+    const volScalarField eC(eCold());
+    const scalar TMinPhys = Foam::max(100.0, thermoPtr_->TLow());
+    forAll(e_, celli)
+    {
+        if (alpha[celli] > rAlpha && alphaRho_[celli] > rAlphaRho)
+        {
+            const scalar eMin = thermoPtr_->cellhe(TMinPhys, celli);
+            const scalar eMax = thermoPtr_->cellhe(thermoPtr_->THigh(), celli);
+            const scalar eDecoded =
+                alphaRhoE_[celli]/alphaRho_[celli] + eC[celli];
+            e_[celli] = Foam::min(eMax, Foam::max(eMin, eDecoded));
+        }
+        else
+        {
+            e_[celli] = thermoPtr_->cellhe(288.15, celli);
+            alphaRhoE_[celli] = alphaRho_[celli]*(e_[celli] - eC[celli]);
+        }
+    }
+    if (constraints.constrainsField(e_.name()))
+    {
+        constraints.constrain(e_);
+    }
     e_.correctBoundaryConditions();
+    alphaRhoE_.boundaryFieldRef() ==
+        alphaRho_.boundaryField()
+       *(e_.boundaryField() - eC.boundaryField());
 
-    //- Compute granular temperature
-    alphaRhoPTE_.max(0.0);
-    Theta_.internalFieldRef() = alphaRhoPTE_()/(1.5*alphaRhoLimited());
+    //- Calculate granular temperature from pseudo thermal energy
+    forAll(Theta_, celli)
+    {
+        if (alpha[celli] > rAlpha && alphaRho_[celli] > rAlphaRho)
+        {
+            Theta_[celli] =
+                Foam::max(0.0, 2.0/3.0*alphaRhoPTE_[celli]/alphaRho_[celli]);
+        }
+        else
+        {
+            Theta_[celli] = 0;
+            alphaRhoPTE_[celli] = 0;
+        }
+    }
     if (constraints.constrainsField(Theta_.name()))
     {
         constraints.constrain(Theta_);
     }
+    Theta_.max(0.0);
     Theta_.correctBoundaryConditions();
-
-    alphaRhoPTE_ == 1.5*alphaRho_*Theta_;
-    // alphaRhoPTE_.correctBoundaryConditions();
-    // alphaRhoPTE_.boundaryFieldRef() ==
-    //     1.5*Theta_.boundaryField()*alphaRho_.boundaryField();
+    alphaRhoPTE_.boundaryFieldRef() ==
+        1.5*alphaRho_.boundaryField()*Theta_.boundaryField();
 
     thermoPtr_->correct();
 
-    // Update total energy because e may have changed
-    alphaRhoE_ == alphaRho_*e_;
+    // Reset T in cells where the phase does not exist
+    volScalarField& T = thermoPtr_->T();
+    forAll(T, celli)
+    {
+        if (alpha[celli] <= rAlpha || alphaRho_[celli] <= rAlphaRho)
+        {
+            T[celli] = 288.15;
+        }
+    }
+    T.max(TMinPhys);
+    T.min(thermoPtr_->THigh());
+    T.correctBoundaryConditions();
 
     kineticTheoryModel::correct();
 }
@@ -478,7 +626,7 @@ void Foam::granularPhaseModel::encode()
 {
     alphaRho_ = (*this)*rho_;
     alphaRhoU_ = alphaRho_*U_;
-    alphaRhoE_ = alphaRho_*e_;
+    alphaRhoE_ = alphaRho_*(e_ - eCold());
     alphaRhoPTE_ = 1.5*alphaRho_*Theta_;
 }
 
@@ -503,14 +651,14 @@ void Foam::granularPhaseModel::clear()
 Foam::tmp<Foam::volVectorField>
 Foam::granularPhaseModel::gradP() const
 {
-    return fvc::grad(fluxScheme_->pf()());
+    return fvc::grad(fluxScheme_->pf());
 }
 
 
 Foam::tmp<Foam::volVectorField>
 Foam::granularPhaseModel::gradAlpha() const
 {
-    return fvc::grad(fluxScheme_->alphaf()());
+    return fvc::grad(fluxScheme_->alphaf());
 }
 
 
@@ -539,26 +687,56 @@ Foam::tmp<Foam::volScalarField>
 Foam::granularPhaseModel::speedOfSound() const
 {
     // Speed of sound based on particle collisions
-    tmp<volScalarField> cSqr
-    (
-        this->pPrime()/rho_
-      + 2.0/3.0
-       *sqr
-        (
-            kineticTheorySystem_.dPsdTheta(*this)
-          + cohesion_->dPsdTheta()
-        )*Theta_
-       /sqr(Foam::max(*this, residualAlpha())*rho_)
-    );
-    cSqr.ref().max(small);
-    return tmp<volScalarField>
+    tmp<volScalarField> tc
     (
         new volScalarField
         (
-            IOobject::groupName("speedOfSound", name()),
-            sqrt(cSqr)
+            IOobject
+            (
+                IOobject::groupName("speedOfSound", name()),
+                this->mesh().time().name(),
+                this->mesh(),
+                IOobject::NO_READ,
+                IOobject::NO_WRITE
+            ),
+            this->mesh(),
+            dimensionedScalar(dimVelocity, small)
         )
     );
+    volScalarField& c = tc.ref();
+
+    const scalar rAlpha = residualAlpha().value();
+    const scalar rAlphaRho = residualAlphaRho().value();
+
+    const volScalarField pPrimeFld(this->pPrime());
+    const volScalarField dPsdThetaFld
+    (
+        kineticTheorySystem_.dPsdTheta(*this)
+      + cohesion_->dPsdTheta()
+    );
+
+    forAll(c, celli)
+    {
+        const scalar alphai = (*this)[celli];
+        if (alphai > rAlpha && alphaRho_[celli] > rAlphaRho)
+        {
+            const scalar pPrimeVal = pPrimeFld[celli]/rho_[celli];
+            const scalar dPsdThetaVal = dPsdThetaFld[celli];
+            const scalar cSqrVal =
+                pPrimeVal
+              + (2.0/3.0)*sqr(dPsdThetaVal)*Theta_[celli]/sqr(alphai*rho_[celli]);
+            c[celli] = Foam::min(20000.0, sqrt(Foam::max(cSqrVal, small)));
+        }
+        else
+        {
+            c[celli] = small;
+        }
+    }
+    forAll(c.boundaryField(), patchi)
+    {
+        c.boundaryFieldRef()[patchi] = small;
+    }
+    return tc;
 }
 
 void Foam::granularPhaseModel::correctThermo()

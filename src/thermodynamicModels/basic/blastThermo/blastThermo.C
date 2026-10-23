@@ -220,6 +220,12 @@ Foam::blastThermo::blastThermo
       ? dict.lookupOrDefault<scalar>("TLow", small)
       : -great
     ),
+    THigh_
+    (
+        dict.lookupOrDefault("limitT", true)
+      ? dict.lookupOrDefault<scalar>("THigh", 1e5)
+      : great
+    ),
     residualAlpha_("residualAlpha", dimless, 0.0),
     residualRho_("residualRho", dimDensity, 0.0)
 {}

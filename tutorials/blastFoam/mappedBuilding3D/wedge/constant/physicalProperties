@@ -32,7 +32,10 @@ c4
             rho0            1601;
             Gamma           0.25;
             pRef            101298;
-            K0              0;
+            // Unreacted C-4: Reuss mixture of the EuDetCode Murnaghan data of
+            // RDX, DOA, PIB and mineral oil (K0 = 1/sum(phi_i/K0_i))
+            K0              1.031e+10;
+            n               8.14;
         }
         specie
         {
@@ -103,7 +106,7 @@ c4
         pMin            101300;
         points          ( ( 0 0 0.5 ) );
         radius          0.05;
-        vDet            7850;
+        vDet            8227.6; // CJ speed of the products JWL (utilities/thermo_fitter/check_programmed_burn.py)
     }
     residualRho     1e-06;
     residualAlpha   1e-10;

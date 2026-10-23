@@ -1,0 +1,264 @@
+/*--------------------------------*- C++ -*----------------------------------*\
+| =========                 |                                                 |
+| \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox           |
+|  \\    /   O peration     | Version:  2.3.0                                 |
+|   \\  /    A nd           | Web:      www.OpenFOAM.org                      |
+|    \\/     M anipulation  |                                                 |
+\*---------------------------------------------------------------------------*/
+FoamFile
+{
+    version     2.0;
+    format      ascii;
+    class       dictionary;
+    location    "constant";
+    object      phaseProperties;
+}
+// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
+
+// Volume (pressure) equilibration of all non-carrier fluid phases
+alphaDilute     1;
+
+// Riemann problems of a fluid phase that is a trace on one side of a face
+// (alpha < alphaTrace) use the mixture impedance on that side
+alphaTrace      1e-3;
+
+phases          ( Al compBAl gas );
+
+transportPhaseDensity true;
+
+VRelaxation     instant;
+
+Al
+{
+    phaseType       granular;
+    diameterModel   reacting;
+    reactingDiameterCoeffs
+    {
+        d               3e-5;
+        reactionRate    Beckstead;
+        // Beckstead (2005) d^n law; ignition at Tign (1e5: never ignites)
+        Tign            2050;
+        // Burns only with gas-phase oxidiser (X_eff of O2, H2O, CO2), scaled
+        // by the gas fraction of the surrounding fluid, to Al2O3 + H2/CO
+        oxidiserPhase   gas;
+        products        true;
+        // Ignition tracked per particle cloud (transported ignited fraction)
+        ignitedFraction true;
+        // Burn down to dilute clouds (the default 1e-4 is reached at 0.5 m)
+        alphaMin        1e-6;
+    }
+
+    alphaMax        0.63;
+    alphaMinFriction 0.5;
+
+    kineticTheoryCoeffs
+    {
+        e               0.999;
+    }
+    residualAlpha   1e-6;
+    residualRho     2700;
+}
+
+compBAl
+{
+    phaseType       fluid;
+
+    diameterModel   constant;
+    constantDiameterCoeffs
+    {
+        d               0;
+    }
+
+    residualRho     1e-6;
+    residualAlpha   1e-6;
+}
+
+gas
+{
+    phaseType       fluid;
+
+    diameterModel   constant;
+    constantDiameterCoeffs
+    {
+        d               0;
+    }
+
+    residualRho     1.2;
+    residualAlpha   1e-6;
+}
+
+blending
+{
+    default
+    {
+        type            none;
+        continuousPhases (gas compBAl);
+    }
+}
+
+interfacialPressure
+(
+    (gas and Al)
+    {
+        type            single;
+        phase           gas;
+    }
+
+    (compBAl and Al)
+    {
+        type            single;
+        phase           compBAl;
+    }
+
+    (compBAl and gas)
+    {
+      type            totalPressure;
+    }
+);
+
+interfacialVelocity
+(
+    (gas and Al)
+    {
+        type            single;
+        phase           Al;
+    }
+
+    (compBAl and Al)
+    {
+        type            single;
+        phase           Al;
+    }
+
+    (compBAl and gas)
+    {
+        type            massAveraged;
+    }
+);
+
+massTransfer
+(
+    (Al in gas)
+    {
+        type            reactingParticle;
+        // Products and consumed oxidisers from the Beckstead rate
+        productsFromReactionRate true;
+    }
+);
+
+aspectRatio
+(
+);
+
+solveDragODE on;
+dragODECoeffs
+{
+    solver          seulex;
+    relTol          1e-3;
+    solveODE        true;
+    alphaCutoff     1e-6;
+}
+
+drag
+(
+    (Al in gas)
+    {
+        type            Loth;
+        alphaCutoff     1e-6;
+        swarmCorrection
+        {
+            type            none;
+        }
+    }
+    (Al in compBAl)
+    {
+        type            GidaspowErgunWenYu;
+        residualRe      1e-3;
+        alphaCutoff     1e-2;
+        swarmCorrection
+        {
+            type            none;
+        }
+    }
+);
+
+virtualMass
+(
+);
+
+heatTransfer
+(
+    // Products/gas temperature relaxation in numerically mixed cells
+    // (with alphaDilute 1: pressure and temperature equilibrium)
+    (compBAl in gas)
+    {
+        type            constantCoefficient;
+        Kh              1e15;
+    }
+
+    (Al in gas)
+    {
+        type            RanzMarshall;
+        NuModel         Kavanau;
+    }
+
+    (Al in compBAl)
+    {
+        type            RanzMarshall;
+        NuModel         Gunn;
+    }
+);
+
+interfacialPressure
+(
+    (compBAl and gas)
+    {
+        type            totalPressure;
+    }
+);
+
+lift
+(
+);
+
+wallLubrication
+(
+);
+
+turbulentDispersion
+(
+);
+
+kineticTheory
+{
+    alphaMax            0.63;
+    residualAlpha       1e-8;
+    alphaMinFriction    0.5;
+
+    radialModel         SinclairJackson;
+    viscosityModel      none;
+    conductivityModel   Syamlal;
+    granularPressureModel Lun;
+    frictionalStressModel JohnsonJackson;
+
+    JohnsonJacksonCoeffs
+    {
+        alphaMinFriction        0.5;
+        Fr                      0.05;
+        eta                     2;
+        p                       5;
+        phi                     28.5;
+        alphaDeltaMin           1e-3;
+    }
+}
+
+pressureRelaxationSolver
+{
+    type            none;
+}
+
+pressureRelaxation
+(
+);
+
+// ************************************************************************* //

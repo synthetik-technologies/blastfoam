@@ -90,6 +90,14 @@ Foam::dragODE::dragODE(phaseSystem& fluid, dragModelTable& dragModels)
     ODESystem(),
     dict_(fluid.subDict("dragODECoeffs")),
     solveDrag_(dict_.lookupOrDefault("solveODE", false)),
+    alphaCutoff_
+    (
+        dict_.lookupOrDefault<scalar>
+        (
+            "alphaCutoff",
+            dict_.lookupOrDefault<scalar>("alphaMin", 0.0)
+        )
+    ),
     fluid_(fluid),
     phaseModels_(fluid.phases()),
     dragModels_(dragModels.size()),
@@ -156,13 +164,26 @@ void Foam::dragODE::derivatives
         const phaseModel& phase1(pair.phase1());
         const phaseModel& phase2(pair.phase2());
 
+        const scalar rAlpha1 = Foam::max(phase1.residualAlpha().value(), alphaCutoff_);
+        const scalar rAlpha2 = Foam::max(phase2.residualAlpha().value(), alphaCutoff_);
+
+        if (phase1[li] <= rAlpha1 || phase2[li] <= rAlpha2)
+        {
+            continue;
+        }
+
+        const scalar drag = dragModels_[pairi].cellK(li);
+        if (drag <= 0.0)
+        {
+            continue;
+        }
+
         const scalar alphaRho1 =
             Foam::max(phase1.alphaRho()[li], 1e-6);
 
         const scalar alphaRho2 =
             Foam::max(phase2.alphaRho()[li], 1e-6);
 
-        const scalar drag = dragModels_[pairi].cellK(li);
         const scalar drag1 = drag/alphaRho1;
         const scalar drag2 = drag/alphaRho2;
 
@@ -214,13 +235,26 @@ void Foam::dragODE::jacobian
         const phaseModel& phase1(pair.phase1());
         const phaseModel& phase2(pair.phase2());
 
+        const scalar rAlpha1 = Foam::max(phase1.residualAlpha().value(), alphaCutoff_);
+        const scalar rAlpha2 = Foam::max(phase2.residualAlpha().value(), alphaCutoff_);
+
+        if (phase1[li] <= rAlpha1 || phase2[li] <= rAlpha2)
+        {
+            continue;
+        }
+
+        const scalar drag = dragModels_[pairi].cellK(li);
+        if (drag <= 0.0)
+        {
+            continue;
+        }
+
         const scalar alphaRho1 =
             Foam::max(phase1.alphaRho()[li], 1e-6);
 
         const scalar alphaRho2 =
             Foam::max(phase2.alphaRho()[li], 1e-6);
 
-        const scalar drag = dragModels_[pairi].cellK(li);
         const scalar drag1 = drag/alphaRho1;
         const scalar drag2 = drag/alphaRho2;
 
@@ -285,10 +319,33 @@ Foam::scalar Foam::dragODE::solve
 {
     forAll(phaseModels_[0], celli)
     {
-        scalarList oldKs(phaseModels_.size());
-        forAll(oldKs, phasei)
+        bool hasActiveDrag = false;
+        forAll(phasePairs_, pairi)
         {
-            oldKs[phasei] = magSqr(phaseModels_[phasei].U()[celli]);
+            const phasePair& pair(phasePairs_[pairi]);
+            const phaseModel& phase1(pair.phase1());
+            const phaseModel& phase2(pair.phase2());
+
+            const scalar rAlpha1 = Foam::max(phase1.residualAlpha().value(), alphaCutoff_);
+            const scalar rAlpha2 = Foam::max(phase2.residualAlpha().value(), alphaCutoff_);
+            if (phase1[celli] > rAlpha1 && phase2[celli] > rAlpha2)
+            {
+                if (dragModels_[pairi].cellK(celli) > 0.0)
+                {
+                    hasActiveDrag = true;
+                    break;
+                }
+            }
+        }
+        if (!hasActiveDrag)
+        {
+            continue;
+        }
+
+        List<vector> oldUs(phaseModels_.size());
+        forAll(oldUs, phasei)
+        {
+            oldUs[phasei] = phaseModels_[phasei].U()[celli];
         }
         setq(celli);
 
@@ -300,6 +357,57 @@ Foam::scalar Foam::dragODE::solve
             setUs(celli);
             timeLeft -= dt;
             deltaT_[celli] = dt;
+        }
+
+        // Work of the drag forces. Each phase that tracks total energy
+        // receives dM.Ui, the momentum it gained times a common interfacial
+        // velocity Ui; the internal energy is corrected so that encode()
+        // (e + K) gives that total energy. With Ui the update-averaged
+        // velocity of the one phase without kinetic energy in its energy
+        // equation (granular), the fluids lose exactly the kinetic energy
+        // the particles gain, and the dissipation stays in the fluids as
+        // heat. Without such a phase Ui is the mass-averaged velocity, which
+        // conserves the total energy as the momentum changes sum to zero.
+        vector Ui(Zero);
+        label nPassive = 0;
+        scalar sumAlphaRho = 0.0;
+        vector sumAlphaRhoU(Zero);
+        forAll(phaseModels_, phasei)
+        {
+            const phaseModel& phase = phaseModels_[phasei];
+            if (!phase.totalEnergy())
+            {
+                Ui += 0.5*(oldUs[phasei] + phase.U()[celli]);
+                nPassive++;
+            }
+            sumAlphaRho += phase.alphaRho()[celli];
+            sumAlphaRhoU += phase.alphaRho()[celli]*oldUs[phasei];
+        }
+        if (nPassive == 1)
+        {
+            // Ui already set
+        }
+        else if (nPassive == 0)
+        {
+            Ui = sumAlphaRhoU/max(sumAlphaRho, small);
+        }
+        else
+        {
+            // Several phases without kinetic energy in their energy
+            // equation: no common Ui conserves energy exactly; use their
+            // mean velocity
+            Ui /= nPassive;
+        }
+
+        forAll(phaseModels_, phasei)
+        {
+            phaseModel& phase = phaseModels_[phasei];
+            if (phase.totalEnergy())
+            {
+                const vector& U0 = oldUs[phasei];
+                const vector& U1 = phase.U()[celli];
+                phase.he()[celli] += (U1 - U0) & (Ui - 0.5*(U0 + U1));
+            }
         }
     }
     forAll(phaseModels_, phasei)

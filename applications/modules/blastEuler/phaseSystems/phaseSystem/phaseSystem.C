@@ -24,6 +24,7 @@ License
 \*---------------------------------------------------------------------------*/
 
 #include "phaseSystem.H"
+#include "fluidBlastThermo.H"
 #include "kineticTheorySystem.H"
 #include "aspectRatioModel.H"
 #include "dragModel.H"
@@ -142,6 +143,103 @@ if (!stabAlphaRhos.set(Phase.index()))                  \
 }                                                       \
 const volScalarField& var = stabAlphaRhos[Phase.index()];
 
+void Foam::phaseSystem::relaxFluidVelocitiesInstant()
+{
+    const label nFluids = fluidPhaseModels_.size();
+    UPtrList<fluidBlastThermo> thermos(nFluids);
+    forAll(fluidPhaseModels_, i)
+    {
+        thermos.set
+        (
+            i,
+            &mesh_.lookupObjectRef<fluidBlastThermo>
+            (
+                IOobject::groupName
+                (
+                    physicalProperties::typeName,
+                    fluidPhaseModels_[i].name()
+                )
+            )
+        );
+    }
+
+    scalarList m(nFluids), E(nFluids), Enew(nFluids);
+    forAll(rho_, celli)
+    {
+        scalar M = 0;
+        vector MU = Zero;
+        forAll(fluidPhaseModels_, i)
+        {
+            const phaseModel& phase = fluidPhaseModels_[i];
+            m[i] = phase.alphaRho()[celli];
+            E[i] = phase.alphaRhoE()[celli];
+            M += m[i];
+            MU += phase.alphaRhoU()[celli];
+        }
+        const vector VI = MU/max(M, 1e-6);
+        const scalar KI = 0.5*magSqr(VI);
+
+        // Each phase keeps its internal energy and is heated by its own
+        // dissipation, 0.5*alphaRho*|U - VI|^2, which conserves the total
+        // energy. The kinetic energy of a phase with little mass can exceed
+        // its total energy (its momentum comes from face fluxes weighted by
+        // the face volume fraction); where the internal energy would fall
+        // below the thermo range, that kinetic energy is not counted and the
+        // small remainder goes to the other phases by mass. Heating beyond
+        // the upper thermo limit is not applied.
+        scalar R = 0;
+        scalar Mvalid = 0;
+        forAll(fluidPhaseModels_, i)
+        {
+            const phaseModel& phase = fluidPhaseModels_[i];
+            if (m[i] <= phase.residualAlphaRho().value())
+            {
+                Enew[i] = E[i];
+                continue;
+            }
+            const vector U = phase.alphaRhoU()[celli]/m[i];
+            scalar e = (E[i] - 0.5*m[i]*magSqr(U))/m[i];
+            scalar D = 0.5*magSqr(U - VI);
+            const scalar eMin = thermos[i].cellhe(thermos[i].TLow(), celli);
+            const scalar eMax = thermos[i].cellhe(thermos[i].THigh(), celli);
+            if (e < eMin)
+            {
+                e = eMin;
+                D = 0;
+            }
+            const scalar eNew = Foam::min(e + D, Foam::max(eMax, e));
+            Enew[i] = m[i]*(eNew + KI);
+            if (e + D <= eMax)
+            {
+                R += E[i] - Enew[i];
+            }
+            Mvalid += m[i];
+        }
+
+        forAll(fluidPhaseModels_, i)
+        {
+            phaseModel& phase = fluidPhaseModels_[i];
+            scalar Ei = Enew[i];
+            if (Mvalid > small && m[i] > phase.residualAlphaRho().value())
+            {
+                Ei += m[i]/Mvalid*R;
+            }
+            phase.alphaRhoE()[celli] = Ei;
+            phase.alphaRhoU()[celli] = m[i]*VI;
+            phase.U()[celli] = VI;
+        }
+    }
+
+    forAll(fluidPhaseModels_, i)
+    {
+        phaseModel& phase = fluidPhaseModels_[i];
+        phase.U().correctBoundaryConditions();
+        phase.alphaRhoU().boundaryFieldRef() ==
+            phase.alphaRho().boundaryField()*phase.U().boundaryField();
+    }
+}
+
+
 void Foam::phaseSystem::relaxVelocity(const dimensionedScalar& deltaT)
 {
     if (VRelaxation_ == NONE)
@@ -156,24 +254,7 @@ void Foam::phaseSystem::relaxVelocity(const dimensionedScalar& deltaT)
     }
     else if (VRelaxation_ == INSTANT)
     {
-        volVectorField VI(fluidPhaseModels_[0].alphaRhoU());
-        volScalarField fluidRho(fluidPhaseModels_[0].alphaRho());
-        for (label i = 1; i < fluidPhaseModels_.size(); i++)
-        {
-            VI += fluidPhaseModels_[i].alphaRhoU();
-            fluidRho += fluidPhaseModels_[i].alphaRho();
-        }
-        fluidRho.max(1e-6);
-        VI /= fluidRho;
-
-        forAll(fluidPhaseModels_, i)
-        {
-            phaseModel& phase = fluidPhaseModels_[i];
-            phase.alphaRhoE() +=
-                0.5*phase.alphaRho()*(magSqr(VI) - magSqr(phase.U()));
-            phase.alphaRhoU() = phase.alphaRho()*VI;// - phase.U());
-            phase.U() = VI;
-        }
+        relaxFluidVelocitiesInstant();
     }
 
     UiTable Uis;
@@ -226,16 +307,41 @@ void Foam::phaseSystem::relaxVelocity(const dimensionedScalar& deltaT)
                 *(1.0/(Kd*XiD*deltaT + 1.0) - 1.0)
             );
 
+            const scalar rAlpha1 = phase1.residualAlpha().value();
+            const scalar rAlpha2 = phase2.residualAlpha().value();
+            forAll(deltaM, celli)
+            {
+                if (phase1[celli] <= rAlpha1 || phase2[celli] <= rAlpha2)
+                {
+                    deltaM[celli] = Zero;
+                }
+            }
+
+            // Work of the drag force at the interfacial velocity averaged
+            // over the implicit update, so that the work done on a phase
+            // moving with the interfacial velocity equals the change of its
+            // kinetic energy (the dissipation goes to the other phase)
+            volVectorField Ui(*Uis[pair]);
+            {
+                const volVectorField U1(phase1.U());
+                const volVectorField U2(phase2.U());
+                phase1.U() = U1 + deltaM/alphaRho1;
+                phase2.U() = U2 - deltaM/alphaRho2;
+                Ui = 0.5*(Ui + interfacialVelocityModels_[pair]->UI());
+                phase1.U() = U1;
+                phase2.U() = U2;
+            }
+
             phase1.alphaRhoU() += deltaM;
             if (phase1.totalEnergy())
             {
-                phase1.alphaRhoE() += deltaM & (*Uis[pair]);
+                phase1.alphaRhoE() += deltaM & Ui;
             }
 
             phase2.alphaRhoU() -= deltaM;
             if (phase2.totalEnergy())
             {
-                phase2.alphaRhoE() -= deltaM & (*Uis[pair]);
+                phase2.alphaRhoE() -= deltaM & Ui;
             }
         }
 
@@ -287,9 +393,21 @@ void Foam::phaseSystem::relaxVelocity(const dimensionedScalar& deltaT)
                 )
             );
 
+            const scalar rAlphaP = particles->residualAlpha().value();
+            const scalar rAlphaG = gas->residualAlpha().value();
+            volScalarField deltaPTE
+            (
+                1.5*particles->alphaRho()*(ThetaStarStar - ThetaOld)
+            );
+            forAll(deltaPTE, celli)
+            {
+                if ((*particles)[celli] <= rAlphaP || (*gas)[celli] <= rAlphaG)
+                {
+                    deltaPTE[celli] = 0.0;
+                }
+            }
 
-            gas->alphaRhoE() -=
-                1.5*particles->alphaRho()*(ThetaStarStar - ThetaOld);
+            gas->alphaRhoE() -= deltaPTE;
             particles->alphaRhoPTE() =
                 1.5*particles->alphaRho()*ThetaStarStar;
         }
@@ -482,6 +600,16 @@ void Foam::phaseSystem::relaxTemperature(const dimensionedScalar& deltaT)
            *(exp(-Kh*Xie*deltaT) - 1.0)
         );
 
+        const scalar rAlpha1 = phase1.residualAlpha().value();
+        const scalar rAlpha2 = phase2.residualAlpha().value();
+        forAll(deltaE, celli)
+        {
+            if (phase1[celli] <= rAlpha1 || phase2[celli] <= rAlpha2)
+            {
+                deltaE[celli] = 0.0;
+            }
+        }
+
         phase1.alphaRhoE() += deltaE;
         phase2.alphaRhoE() -= deltaE;
     }
@@ -528,10 +656,27 @@ void Foam::phaseSystem::calcMixtureVariables()
         const volScalarField& alphaRho = phase.alphaRho();
         rho_ += alphaRho;
         alphaRhoU += phase.alphaRhoU();
-        alphaRhoT += alphaRho*phase.T();
     }
-    U_ = alphaRhoU/rho_;
-    T_ = alphaRhoT/rho_;
+    const volScalarField rhoLim(max(rho_, dimensionedScalar(dimDensity, small)));
+    U_ = alphaRhoU/rhoLim;
+
+    forAll(T_, celli)
+    {
+        scalar activeRho = 0.0;
+        scalar activeRhoT = 0.0;
+        forAll(phaseModels_, phasei)
+        {
+            const phaseModel& phase = phaseModels_[phasei];
+            const scalar rAlpha = phase.residualAlpha().value();
+            if (phase[celli] > rAlpha)
+            {
+                const scalar aRho = phase.alphaRho()[celli];
+                activeRho += aRho;
+                activeRhoT += aRho*phase.T()[celli];
+            }
+        }
+        T_[celli] = activeRho > small ? (activeRhoT / activeRho) : 288.15;
+    }
 
     if (fluidPhaseModels_.size() == 1)
     {
@@ -578,7 +723,43 @@ void Foam::phaseSystem::calcMixtureVariables()
               + phase.alphaRho()*magSqr(phase.U() - U_);
         }
     }
+    sumAlpha.max(1e-12);
     p_ /= sumAlpha;
+
+    if (alphaTrace_ > 0)
+    {
+        volScalarField sumAlphaRhoCSqr
+        (
+            volScalarField::New
+            (
+                "sumAlphaRhoCSqr",
+                mesh_,
+                dimensionedScalar(dimDensity*sqr(dimVelocity), 0)
+            )
+        );
+        volScalarField sumAlphaRhoFluid
+        (
+            volScalarField::New
+            (
+                "sumAlphaRhoFluid",
+                mesh_,
+                dimensionedScalar(dimDensity, 0)
+            )
+        );
+        forAll(fluidPhaseModels_, phasei)
+        {
+            const phaseModel& phase(fluidPhaseModels_[phasei]);
+            const volScalarField alphaRhoActive
+            (
+                phase.alphaRho()*pos(phase - phase.residualAlpha())
+            );
+            sumAlphaRhoCSqr += alphaRhoActive*sqr(phase.speedOfSound());
+            sumAlphaRhoFluid += alphaRhoActive;
+        }
+        sumAlphaRhoFluid.max(dimensionedScalar(dimDensity, small));
+        cMix_ = sqrt(sumAlphaRhoCSqr/sumAlphaRhoFluid);
+    }
+    sumAlphaRho.max(dimensionedScalar("0", dimDensity, 1e-12));
     kappa_ = sumAlphaRhoKappa/sumAlphaRho;
 }
 
@@ -717,6 +898,18 @@ Foam::phaseSystem::phaseSystem
         )
     ),
 
+    cMix_
+    (
+        IOobject
+        (
+            "cMix",
+            mesh.time().name(),
+            mesh
+        ),
+        mesh,
+        dimensionedScalar(dimVelocity, 0.0)
+    ),
+
     g_(mesh.lookupObject<uniformDimensionedVectorField>("g")),
 
     phaseModels_(lookup("phases"), phaseModel::iNew(*this)),
@@ -731,7 +924,9 @@ Foam::phaseSystem::phaseSystem
       ? PVRelaxationNames_.read(this->lookup("VRelaxation"))
       : MODEL
     ),
-    PRelaxation_(NONE)
+    PRelaxation_(NONE),
+    alphaDilute_(lookupOrDefault<scalar>("alphaDilute", 0.01)),
+    alphaTrace_(lookupOrDefault<scalar>("alphaTrace", 0))
 {
     // Blending methods
     forAllConstIter(dictionary, subDict("blending"), iter)
@@ -796,6 +991,16 @@ Foam::phaseSystem::phaseSystem
             (
                 slavePhaseModels_.size() - 1,
                 &phaseModels_[phasei]
+            );
+        }
+    }
+    if (alphaTrace_ > 0 && fluidPhaseModels_.size() > 1)
+    {
+        forAll(fluidPhaseModels_, i)
+        {
+            fluidPhaseModels_[i].flux().setMixture
+            (
+                alphaTrace_, rho_, cMix_, U_, p_
             );
         }
     }
@@ -1067,6 +1272,14 @@ Foam::phaseSystem::~phaseSystem()
 
 void Foam::phaseSystem::decode()
 {
+    //- 1. Decode slave (granular) phases first to calculate compressed density and alpha
+    forAll(slavePhaseModels_, i)
+    {
+        slavePhaseModels_[i].correctBoundaryConditions();
+        slavePhaseModels_[i].decode();
+    }
+
+    //- 2. Adjust carrier fluid volume fractions so sum(alpha) = 1
     if (phaseModels_.size() == 2)
     {
         phaseModel& phase1 = phaseModels_[0];
@@ -1099,11 +1312,12 @@ void Foam::phaseSystem::decode()
             }
             if (fixedAlpha >= 1)
             {
+                const scalar scale = 1.0/fixedAlpha;
                 forAll(slavePhaseModels_, i)
                 {
                     slavePhaseModels_[i].scaleVolumeFraction
                     (
-                        fixedAlpha,
+                        scale,
                         celli
                     );
                 }
@@ -1148,11 +1362,21 @@ void Foam::phaseSystem::decode()
         }
     }
 
-    // Decode now that volume fraction has been calculated
-    forAll(phaseModels_, phasei)
+    //- 3. Decode fluid phases now that carrier volume fractions are updated
+    forAll(fluidPhaseModels_, i)
     {
-        phaseModels_[phasei].correctBoundaryConditions();
-        phaseModels_[phasei].decode();
+        fluidPhaseModels_[i].correctBoundaryConditions();
+        fluidPhaseModels_[i].decode();
+    }
+
+    //- 4. Pressure equilibrium of dilute fluid phases, then decode again
+    if (equilibrateDiluteVolumes())
+    {
+        forAll(fluidPhaseModels_, i)
+        {
+            fluidPhaseModels_[i].correctBoundaryConditions();
+            fluidPhaseModels_[i].decode();
+        }
     }
 
     // Update all masterSystems
@@ -1168,6 +1392,211 @@ void Foam::phaseSystem::decode()
     //         fluidPhaseModels_[i].p() = p();
     //     }
     // }
+}
+
+
+bool Foam::phaseSystem::equilibrateDiluteVolumes()
+{
+    if (alphaDilute_ <= 0 || fluidPhaseModels_.size() < 2)
+    {
+        return false;
+    }
+
+    UPtrList<fluidBlastThermo> thermos(fluidPhaseModels_.size());
+    forAll(fluidPhaseModels_, i)
+    {
+        thermos.set
+        (
+            i,
+            &mesh_.lookupObjectRef<fluidBlastThermo>
+            (
+                IOobject::groupName
+                (
+                    physicalProperties::typeName,
+                    fluidPhaseModels_[i].name()
+                )
+            )
+        );
+    }
+
+    // Pressure of fluid phase i in celli at the given density and energy
+    auto cellp = [&](const label i, const scalar rho, const scalar e, const label celli)
+    {
+        fluidBlastThermo& thermo = thermos[i];
+        thermo.rhoRef()[celli] = rho;
+        thermo.he()[celli] = e;
+        thermo.T()[celli] = thermo.cellThe(e, thermo.T()[celli], celli);
+        return thermo.cellpRhoT(celli);
+    };
+
+    // Whether fluid phase i has a positive pressure at the given density
+    // (at its current temperature). Rejects trial states outside the range
+    // of the equation of state, e.g. an Abel-Nobel gas compressed past its
+    // covolume, for which the energy -> temperature solve has no solution
+    auto validRho = [&](const label i, const scalar rho, const label celli)
+    {
+        fluidBlastThermo& thermo = thermos[i];
+        const scalar rho0 = thermo.rhoRef()[celli];
+        thermo.rhoRef()[celli] = rho;
+        const bool valid = thermo.cellpRhoT(celli) > 0;
+        thermo.rhoRef()[celli] = rho0;
+        return valid;
+    };
+
+    // rho*c^2/alpha of fluid phase i at the state last set by cellp
+    auto cellC = [&](const label i, const scalar p, const scalar alpha, const label celli)
+    {
+        fluidBlastThermo& thermo = thermos[i];
+        return
+            thermo.rhoRef()[celli]
+           *sqr(thermo.cellSpeedOfSound(p, celli))
+           /alpha;
+    };
+
+    const label maxIter = 50;
+    const label maxHalvings = 10;
+    const scalar pRelTol = 1e-6;
+    bool changed = false;
+
+    forAll(rho_, celli)
+    {
+        // Carrier: the fluid phase with the largest volume fraction
+        label c = 0;
+        forAll(fluidPhaseModels_, i)
+        {
+            if (fluidPhaseModels_[i][celli] > fluidPhaseModels_[c][celli])
+            {
+                c = i;
+            }
+        }
+        phaseModel& carrier = fluidPhaseModels_[c];
+
+        forAll(fluidPhaseModels_, k)
+        {
+            phaseModel& phase = fluidPhaseModels_[k];
+            const scalar alphak0 = phase[celli];
+            const scalar alphaRhok = phase.alphaRho()[celli];
+            if
+            (
+                k == c
+             || alphak0 >= alphaDilute_
+             || alphak0 <= phase.residualAlpha().value()
+             || alphaRhok <= phase.residualAlphaRho().value()
+            )
+            {
+                continue;
+            }
+
+            const scalar alphac0 = carrier[celli];
+            const scalar alphaRhoc = carrier.alphaRho()[celli];
+            const scalar Tk0 = thermos[k].T()[celli];
+            const scalar Tc0 = thermos[c].T()[celli];
+            // Energy bounds of the thermo temperature range
+            const scalar ekMin =
+                thermos[k].cellhe(thermos[k].TLow(), celli);
+            const scalar ekMax =
+                thermos[k].cellhe(thermos[k].THigh(), celli);
+            const scalar ecMin =
+                thermos[c].cellhe(thermos[c].TLow(), celli);
+            const scalar ecMax =
+                thermos[c].cellhe(thermos[c].THigh(), celli);
+
+            // Damped Newton iteration on the volume exchanged; the work of
+            // each increment is evaluated at the mean pressure, so total
+            // energy is conserved
+            scalar alphak = alphak0;
+            scalar alphac = alphac0;
+            const scalar ek0 = thermos[k].he()[celli];
+            const scalar ec0 = thermos[c].he()[celli];
+            scalar ek = ek0;
+            scalar ec = ec0;
+            scalar pk = cellp(k, alphaRhok/alphak, ek, celli);
+            scalar Ck = cellC(k, pk, alphak, celli);
+            scalar pc = cellp(c, alphaRhoc/alphac, ec, celli);
+            scalar Cc = cellC(c, pc, alphac, celli);
+
+            for (label iter = 0; iter < maxIter; iter++)
+            {
+                const scalar dp = pk - pc;
+                if (mag(dp) <= pRelTol*(mag(pk) + mag(pc)) + small)
+                {
+                    break;
+                }
+
+                scalar dAlpha = dp/max(Ck + Cc, small);
+
+                // At most double the dilute phase volume and take at most
+                // 10% of the carrier volume per iteration. The dilute phase
+                // is compressed by at most a factor of two per call:
+                // compressing e.g. trace gas in a detonating explosive to
+                // the carrier pressure can take it far outside the range of
+                // its equation of state.
+                dAlpha = min(dAlpha, alphak);
+                dAlpha = min(dAlpha, 0.1*alphac);
+                dAlpha = max(dAlpha, 0.5*alphak0 - alphak);
+                if (dAlpha == 0)
+                {
+                    break;
+                }
+
+                const scalar pI = 0.5*(pk + pc);
+                bool accepted = false;
+                scalar ekNew = ek, ecNew = ec, pkNew = pk, pcNew = pc;
+                for (label h = 0; h < maxHalvings; h++)
+                {
+                    ekNew = ek - pI*dAlpha/alphaRhok;
+                    ecNew = ec + pI*dAlpha/alphaRhoc;
+                    if
+                    (
+                        ekNew > ekMin && ekNew < ekMax
+                     && ecNew > ecMin && ecNew < ecMax
+                     && validRho(k, alphaRhok/(alphak + dAlpha), celli)
+                     && validRho(c, alphaRhoc/(alphac - dAlpha), celli)
+                    )
+                    {
+                        pkNew = cellp(k, alphaRhok/(alphak + dAlpha), ekNew, celli);
+                        pcNew = cellp(c, alphaRhoc/(alphac - dAlpha), ecNew, celli);
+                        if (mag(pkNew - pcNew) < mag(dp))
+                        {
+                            accepted = true;
+                            break;
+                        }
+                    }
+                    dAlpha *= 0.5;
+                }
+                if (!accepted)
+                {
+                    break;
+                }
+
+                alphak += dAlpha;
+                alphac -= dAlpha;
+                ek = ekNew;
+                ec = ecNew;
+                pk = pkNew;
+                pc = pcNew;
+                Ck = cellC(k, pk, alphak, celli);
+                Cc = cellC(c, pc, alphac, celli);
+            }
+
+            // Restore the thermo temperatures (the cell is decoded again)
+            thermos[k].T()[celli] = Tk0;
+            thermos[c].T()[celli] = Tc0;
+
+            if (alphak == alphak0)
+            {
+                continue;
+            }
+
+            phase[celli] = alphak;
+            carrier[celli] = alphac;
+            phase.alphaRhoE()[celli] += alphaRhok*(ek - ek0);
+            carrier.alphaRhoE()[celli] += alphaRhoc*(ec - ec0);
+            changed = true;
+        }
+    }
+
+    return returnReduce(changed, orOp<bool>());
 }
 
 
@@ -1281,24 +1710,7 @@ void Foam::phaseSystem::solve()
 
     if (VRelaxation_ == INSTANT)
     {
-        volVectorField VI(fluidPhaseModels_[0].alphaRhoU());
-        volScalarField fluidRho(fluidPhaseModels_[0].alphaRho());
-        for (label i = 1; i < fluidPhaseModels_.size(); i++)
-        {
-            VI += fluidPhaseModels_[i].alphaRhoU();
-            fluidRho += fluidPhaseModels_[i].alphaRho();
-        }
-        fluidRho.max(1e-6);
-        VI /= fluidRho;
-
-        forAll(fluidPhaseModels_, i)
-        {
-            phaseModel& phase = fluidPhaseModels_[i];
-            volVectorField U(phase.alphaRhoU()/max(phase.alphaRho(), phase.residualAlphaRho()));
-            phase.alphaRhoE() += 0.5*phase.alphaRho()*magSqr(VI - U);
-            phase.alphaRhoU() = phase.alphaRho()*VI;
-            phase.U() = VI;
-        }
+        relaxFluidVelocitiesInstant();
     }
 
     if (PRelaxation_ == INSTANT)

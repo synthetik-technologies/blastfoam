@@ -15,6 +15,7 @@ dragModels/TomiyamaCorrelated/TomiyamaCorrelatedDrag.C
 dragModels/TomiyamaAnalytic/TomiyamaAnalyticDrag.C
 dragModels/WenYu/WenYuDrag.C
 dragModels/IshiiZuber/IshiiZuberDrag.C
+dragModels/Loth/LothDrag.C
 dragModels/dragODE/dragODE.C
 
 heatTransferModels/heatTransferModel/heatTransferModel.C
@@ -30,6 +31,7 @@ heatTransferModels/NusseltNumberModels/NusseltNumberModel/NusseltNumberModel.C
 heatTransferModels/NusseltNumberModels/NusseltNumberModel/NusseltNumberModelNew.C
 heatTransferModels/NusseltNumberModels/constant/constantNusseltNumber.C
 heatTransferModels/NusseltNumberModels/sphere/sphereNusseltNumber.C
+heatTransferModels/NusseltNumberModels/Kavanau/KavanauNusseltNumber.C
 heatTransferModels/NusseltNumberModels/RanzMarshall/RanzMarshallNusseltNumber.C
 heatTransferModels/NusseltNumberModels/Gunn/GunnNusseltNumber.C
 heatTransferModels/NusseltNumberModels/duct/ductNusseltNumber.C

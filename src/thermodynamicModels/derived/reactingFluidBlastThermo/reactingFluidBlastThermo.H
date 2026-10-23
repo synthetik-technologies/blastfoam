@@ -64,6 +64,9 @@ class reactingFluidBlastThermo
     //- Solve combustion at all ode steps
     bool odeCombustion_;
 
+    //- Heat release rate [J/m^3/s]
+    volScalarField Qdot_;
+
 
 public:
 

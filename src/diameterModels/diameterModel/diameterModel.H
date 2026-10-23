@@ -47,6 +47,8 @@ SourceFiles
 namespace Foam
 {
 
+class diameterReactionRate;
+
 /*---------------------------------------------------------------------------*\
                            Class diameterModel Declaration
 \*---------------------------------------------------------------------------*/
@@ -131,6 +133,12 @@ public:
         //- Return effective diameter
         virtual const volScalarField& d() const  = 0;
 
+        //- Return initial/reference diameter
+        virtual const volScalarField& d0() const;
+
+        //- Return initial/reference diameter for a cell
+        virtual scalar celld0(const label celli) const;
+
         //- Return surface area
         virtual tmp<volScalarField> A() const = 0;
 
@@ -149,6 +157,12 @@ public:
 
         //- Return the length to diameter ratio for a cell
         virtual scalar LDratio(const label celli) const = 0;
+
+        //- Reaction rate of a reacting diameter model (nullptr if none)
+        virtual const diameterReactionRate* reactionRate() const
+        {
+            return nullptr;
+        }
 };
 
 namespace diameterModels

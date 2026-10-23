@@ -83,8 +83,28 @@ protected:
         //- Residual density
         dimensionedScalar residualRho_;
 
+        //- Pressure [Pa]
+        virtual const volScalarField& p() const
+        {
+            NotImplemented;
+            return rho_;
+        }
+
         //- Minimum temperature
         scalar TLow_ = 0.0;
+
+        //- Maximum temperature
+        scalar THigh_ = 1e5;
+
+        scalar TLow() const
+        {
+            return TLow_;
+        }
+
+        scalar THigh() const
+        {
+            return THigh_;
+        }
 
 
         // Protected member functions
@@ -104,28 +124,42 @@ protected:
             }
 
             //- Heat capacity at constant pressure [J/kg/K]
-            volScalarField& CpRef()
+            virtual const volScalarField& CpRef() const
+            {
+                NotImplemented;
+                return rho_;
+            }
+
+            //- Heat capacity at constant pressure [J/kg/K]
+            virtual volScalarField& CpRef()
             {
                 NotImplemented;
                 return rho_;
             }
 
             //- Heat capacity at constant volume [J/kg/K]
-            volScalarField& CvRef()
+            virtual const volScalarField& CvRef() const
+            {
+                NotImplemented;
+                return rho_;
+            }
+
+            //- Heat capacity at constant volume [J/kg/K]
+            virtual volScalarField& CvRef()
             {
                 NotImplemented;
                 return rho_;
             }
 
             //- Thermal conductivity for enthalpy of mixture [kg/m/s]
-            volScalarField& kappaRef()
+            virtual const volScalarField& kappaRef() const
             {
                 NotImplemented;
                 return rho_;
             }
 
             //- Thermal conductivity for enthalpy of mixture [kg/m/s]
-            const volScalarField& kappa() const
+            virtual volScalarField& kappaRef()
             {
                 NotImplemented;
                 return rho_;
@@ -238,31 +272,59 @@ public:
         }
 
         //- Return constant reference to density field
-        const volScalarField& rho() const
+        virtual tmp<volScalarField> rho() const
         {
             return rho_;
         }
 
         //- Return non-constant reference to density field
-        volScalarField& rho()
+        virtual volScalarField& rho()
         {
             return rho_;
         }
 
         //- Return constant reference to density field
-        const volScalarField& he() const
+        virtual const volScalarField& he() const
         {
             return e_;
         }
 
         //- Return constant reference to density field
-        const volScalarField& T() const
+        virtual const volScalarField& T() const
         {
             return T_;
         }
 
 
     // Member Functions
+
+        //- Return constant reference to heat capacity at constant pressure field
+        virtual const volScalarField& Cp() const
+        {
+            NotImplemented;
+            return rho_;
+        }
+
+        //- Return constant reference to heat capacity at constant volume field
+        virtual const volScalarField& Cv() const
+        {
+            NotImplemented;
+            return rho_;
+        }
+
+        //- Return constant reference to heat capacity at constant pressure/volume field
+        virtual const volScalarField& Cpv() const
+        {
+            NotImplemented;
+            return rho_;
+        }
+
+        //- Return constant reference to thermal conductivity field
+        virtual const volScalarField& kappa() const
+        {
+            NotImplemented;
+            return rho_;
+        }
 
         //- Return energy source
         virtual tmp<volScalarField> ESource

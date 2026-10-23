@@ -118,6 +118,9 @@ class JWL
         //- Internal energy that gives 0 pressure at reference density
         scalar e0_;
 
+        //- Maximum pressure
+        scalar pMax_;
+
 
     // Private member functions
 
@@ -144,7 +147,8 @@ public:
             const scalar B,
             const scalar R1,
             const scalar R2,
-            const scalar e0
+            const scalar e0,
+            const scalar pMax
         );
 
         //- Construct from dictionary

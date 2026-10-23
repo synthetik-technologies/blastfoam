@@ -87,7 +87,8 @@ Foam::scalar Foam::perfectGas<Specie>::p
     const bool limit
 ) const
 {
-    return limit ? max(pRhoT(rho, T), 0.0) : pRhoT(rho, T);
+    scalar pi = pRhoT(rho, T);
+    return limit ? max(pi, 0.0) : pi;
 }
 
 

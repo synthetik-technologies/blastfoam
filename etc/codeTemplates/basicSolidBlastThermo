@@ -27,6 +27,7 @@ thermo
 (
     eConst
     hConst
+    eMelting
     ePower
     ePolynomial
     eIcoTabulated

@@ -3,6 +3,7 @@ errorEstimator/errorEstimatorNew.C
 
 cellSize/cellSizeErrorEstimator.C
 fieldValue/fieldValueErrorEstimator.C
+linearCombination/linearCombinationErrorEstimator.C
 densityGradient/densityGradientErrorEstimator.C
 delta/deltaErrorEstimator.C
 scaledDelta/scaledDeltaErrorEstimator.C

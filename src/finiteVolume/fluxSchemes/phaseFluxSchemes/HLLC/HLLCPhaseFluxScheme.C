@@ -34,6 +34,7 @@ namespace phaseFluxSchemes
 {
     defineTypeNameAndDebug(HLLC, 0);
     addToRunTimeSelectionTable(phaseFluxScheme, HLLC, dictionary);
+    addToRunTimeSelectionTable(phaseFluxScheme, HLLC, solid);
 }
 }
 
@@ -46,7 +47,8 @@ Foam::phaseFluxSchemes::HLLC::HLLC
     const scalar residualAlpha
 )
 :
-    phaseFluxScheme(phi, residualAlpha)
+    phaseFluxScheme(phi, residualAlpha),
+    hybridHLL_(dict_.lookupOrDefault<Switch>("hybridHLL", true))
 {}
 
 
@@ -121,6 +123,99 @@ void Foam::phaseFluxSchemes::HLLC::createSavedFields()
 }
 
 
+void Foam::phaseFluxSchemes::HLLC::preUpdate(const volScalarField& p)
+{
+    if (!hybridHLL_)
+    {
+        return;
+    }
+
+    // The mixture pressure is defined everywhere, the phase pressure only
+    // where the phase is present
+    const volScalarField& pS = mixtureValid() ? *pMix_ : p;
+
+    // Smallest pressure ratio between a cell and its neighbours
+    volScalarField fCells
+    (
+        volScalarField::New
+        (
+            fieldName("fCells"),
+            mesh_,
+            dimensionedScalar(dimless, 1.0)
+        )
+    );
+
+    const labelUList& owner = mesh_.owner();
+    const labelUList& neighbour = mesh_.neighbour();
+    forAll(owner, facei)
+    {
+        const scalar pO = max(pS[owner[facei]], small);
+        const scalar pN = max(pS[neighbour[facei]], small);
+        const scalar r = min(pO/pN, pN/pO);
+        fCells[owner[facei]] = min(fCells[owner[facei]], r);
+        fCells[neighbour[facei]] = min(fCells[neighbour[facei]], r);
+    }
+    forAll(pS.boundaryField(), patchi)
+    {
+        const fvPatchScalarField& pp = pS.boundaryField()[patchi];
+        if (pp.coupled())
+        {
+            const scalarField pO(max(pp.patchInternalField(), small));
+            const scalarField pN(max(pp.patchNeighbourField(), small));
+            const labelUList& faceCells = pp.patch().faceCells();
+            forAll(faceCells, i)
+            {
+                fCells[faceCells[i]] =
+                    min(fCells[faceCells[i]], min(pO[i]/pN[i], pN[i]/pO[i]));
+            }
+        }
+    }
+    fCells.correctBoundaryConditions();
+
+    // HLL weight of a face from the more strongly flagged side
+    thetaHLL_ = tmp<surfaceScalarField>
+    (
+        new surfaceScalarField
+        (
+            IOobject
+            (
+                fieldName("thetaHLL"),
+                mesh_.time().name(),
+                mesh_
+            ),
+            mesh_,
+            dimensionedScalar(dimless, 0)
+        )
+    );
+    surfaceScalarField& theta = thetaHLL_.ref();
+    forAll(owner, facei)
+    {
+        theta[facei] =
+            1 - pow3(min(fCells[owner[facei]], fCells[neighbour[facei]]));
+    }
+    forAll(fCells.boundaryField(), patchi)
+    {
+        const fvPatchScalarField& fp = fCells.boundaryField()[patchi];
+        scalarField& thetap = theta.boundaryFieldRef()[patchi];
+        const scalarField fO(fp.patchInternalField());
+        const scalarField fN
+        (
+            fp.coupled() ? fp.patchNeighbourField() : tmp<scalarField>(fO)
+        );
+        forAll(thetap, i)
+        {
+            thetap[i] = 1 - pow3(min(fO[i], fN[i]));
+        }
+    }
+}
+
+
+void Foam::phaseFluxSchemes::HLLC::postUpdate()
+{
+    thetaHLL_.clear();
+}
+
+
 void Foam::phaseFluxSchemes::HLLC::calculateFluxes
 (
     const scalar& alphaOwn, const scalar& alphaNei,
@@ -161,95 +256,224 @@ void Foam::phaseFluxSchemes::HLLC::calculateFluxes
     scalar UvOwn((UOwn & normal) - vMesh);
     scalar UvNei((UNei & normal) - vMesh);
 
+    // Impedance states for the wave speeds and the star pressure. Where the
+    // phase is a trace on a side (alpha < alphaTrace) that side takes the
+    // mixture state, blended linearly in alpha/alphaTrace; at alpha <= 1e-6
+    // the mixture state replaces the vacuum state.
+    scalar rhoIOwn = rhoOwn, rhoINei = rhoNei;
+    scalar cIOwn = cOwn, cINei = cNei;
+    scalar pIOwn = pOwn, pINei = pNei;
+    scalar UvIOwn = UvOwn, UvINei = UvNei;
+    const bool traceFlux = mixtureValid();
+    if (traceFlux)
+    {
+        const scalar wOwn =
+            ownValid ? min(alphaOwn/alphaTrace_, 1.0) : 0.0;
+        const scalar wNei =
+            neiValid ? min(alphaNei/alphaTrace_, 1.0) : 0.0;
+        rhoIOwn = wOwn*rhoOwn + (1 - wOwn)*rhoMixOwn_;
+        rhoINei = wNei*rhoNei + (1 - wNei)*rhoMixNei_;
+        cIOwn = wOwn*cOwn + (1 - wOwn)*cMixOwn_;
+        cINei = wNei*cNei + (1 - wNei)*cMixNei_;
+        pIOwn = wOwn*pOwn + (1 - wOwn)*pMixOwn_;
+        pINei = wNei*pNei + (1 - wNei)*pMixNei_;
+        UvIOwn = wOwn*UvOwn + (1 - wOwn)*((UMixOwn_ & normal) - vMesh);
+        UvINei = wNei*UvNei + (1 - wNei)*((UMixNei_ & normal) - vMesh);
+    }
+
     // scalar SOwn(UvTilde - cTilde);
     // scalar SNei(UvTilde + cTilde);
-    scalar SOwn(min(UvOwn - cOwn, UvNei - cNei));
-    scalar SNei(max(UvOwn + cOwn, UvNei + cNei));
+    scalar SOwn(min(UvIOwn - cIOwn, UvINei - cINei));
+    scalar SNei(max(UvIOwn + cIOwn, UvINei + cINei));
 
-
-    scalar SStar =
-        (
-            pNei - pOwn
-          + rhoOwn*UvOwn*(SOwn - UvOwn)
-          - rhoNei*UvNei*(SNei - UvNei)
-        )
-       /stabilise(rhoOwn*(SOwn - UvOwn) - rhoNei*(SNei - UvNei), small);
-    scalar pStar =
-        0.5
-       *(
-            pOwn + rhoOwn*(SOwn - UvOwn)*(SStar - UvOwn)
-          + pNei + rhoNei*(SNei - UvNei)*(SStar - UvNei)
-        );
+    const scalar denom = rhoIOwn*(SOwn - UvIOwn) - rhoINei*(SNei - UvINei);
+    scalar SStar = 0.5*(UvIOwn + UvINei);
+    if
+    (
+        mag(denom) > 1e-8
+     && (cIOwn > 1e-4 || cINei > 1e-4 || mag(pINei - pIOwn) > 1e-4)
+    )
+    {
+        SStar =
+            (
+                pINei - pIOwn
+              + rhoIOwn*UvIOwn*(SOwn - UvIOwn)
+              - rhoINei*UvINei*(SNei - UvINei)
+            )/denom;
+    }
+    scalar pStarOwn(pOwn + rhoOwn*(SOwn - UvOwn)*(SStar - UvOwn));
+    scalar pStarNei(pNei + rhoNei*(SNei - UvNei)*(SStar - UvNei));
+    if (traceFlux)
+    {
+        // Common star pressure of the impedance states
+        pStarOwn = pIOwn + rhoIOwn*(SOwn - UvIOwn)*(SStar - UvIOwn);
+        pStarNei = pStarOwn;
+    }
 
     this->save(facei, patchi, SOwn, SOwn_);
     this->save(facei, patchi, SNei, SNei_);
     this->save(facei, patchi, SStar, SStar_);
 
     // Owner values
-    scalar alpha, rho, E, p;
-    vector U;
+    const vector rhoUOwn = rhoOwn*UOwn;
+    const scalar rhoEOwn = rhoOwn*EOwn;
+
+    const vector rhoUPhiOwn = rhoUOwn*UvOwn + pOwn*normal;
+    const scalar rhoEPhiOwn = (rhoEOwn + pOwn)*UvOwn;
+
+    // Neighbour values
+    const vector rhoUNei = rhoNei*UNei;
+    const scalar rhoENei = rhoNei*ENei;
+
+    const vector rhoUPhiNei = rhoUNei*UvNei + pNei*normal;
+    const scalar rhoEPhiNei = (rhoENei + pNei)*UvNei;
+
+    scalar alpha;
+    scalar rhoPhi;
+    vector rhoUPhi;
+    scalar rhoEPhi;
+    scalar p;
     scalar f = 1.0;
 
     if (SOwn >= 0)
     {
         alpha = alphaOwn;
-        rho = rhoOwn;
-        phi = UvOwn*magSf;
-        U = UOwn;
-        E = EOwn;
+        phi = UvOwn;
+        rhoPhi = rhoOwn*phi;
+        rhoUPhi = rhoUPhiOwn;
+        rhoEPhi = rhoEPhiOwn;
         p = pOwn;
+        this->save(facei, patchi, UOwn, Uf_);
     }
-    else if (SStar > 0)
+    else if (SNei <= 0)
     {
-        const scalar rDeltaS = 1.0/(SOwn - SStar);
-        f = (SOwn - UvOwn)*rDeltaS;
-
-        alpha = alphaOwn;
-        rho = rhoOwn*f;
-        phi = SStar*magSf;
-        U = (UOwn - UvOwn*normal) + SStar*normal;
-        E =
-            EOwn
-          + (SStar - UvOwn)
-           *(SStar + pOwn/stabilise(rhoOwn*(SOwn - UvOwn), small));
-          // + (pStar*SStar - pOwn*UvOwn)
-           // /stabilise(rhoOwn*(SOwn - UvOwn), small);
-        p = pStar;
-    }
-    else if (SNei > 0)
-    {
-        const scalar rDeltaS = 1.0/(SNei - SStar);
-        f = (SNei - UvNei)*rDeltaS;
         alpha = alphaNei;
-        rho = rhoNei*f;
-        phi = SStar*magSf;
-        U = (UNei - UvNei*normal) + SStar*normal;
-        E =
-            ENei
-          + (SStar - UvNei)
-           *(SStar + pNei/stabilise(rhoNei*(SNei - UvNei), small));
-          // + (pStar*SStar - pNei*UvNei)
-           // /stabilise(rhoNei*(SNei - UvNei), small);
-        p = pStar;
+        phi = UvNei;
+        rhoPhi = rhoNei*phi;
+        rhoUPhi = rhoUPhiNei;
+        rhoEPhi = rhoEPhiNei;
+        p = pNei;
+        this->save(facei, patchi, UNei, Uf_);
+    }
+    else if (mag(SOwn - SStar) > small && SStar > 0)
+    {
+        f = (SOwn - UvOwn)/stabilise(SOwn - SStar, small);
+        phi = SStar*f;
+        alpha = alphaOwn;
+        rhoPhi = rhoOwn*phi;
+
+        vector rhoUStar = f*rhoOwn*(UOwn - (UvOwn - SStar)*normal);
+        scalar rhoEStar =
+            f*rhoOwn*EOwn + (pStarOwn*SStar - pOwn*UvOwn)/stabilise(SOwn - UvOwn, small);
+
+        if (traceFlux)
+        {
+            // Star flux with the common star pressure
+            rhoUPhi = rhoUStar*SStar + pStarOwn*normal;
+            rhoEPhi = (rhoEStar + pStarOwn)*SStar;
+        }
+        else
+        {
+            rhoUPhi = rhoUPhiOwn + SOwn*(rhoUStar - rhoUOwn);
+            rhoEPhi = rhoEPhiOwn + SOwn*(rhoEStar - rhoEOwn);
+        }
+
+        p = pStarOwn;
+        this->save(facei, patchi, UOwn - (UvOwn - phi)*normal, Uf_);
+    }
+    else if (mag(SNei - SStar) > small && SStar < 0)
+    {
+        f = (SNei - UvNei)/stabilise(SNei - SStar, small);
+        phi = SStar*f;
+        alpha = alphaNei;
+        rhoPhi = rhoNei*phi;
+
+        vector rhoUStar = f*rhoNei*(UNei - (UvNei - SStar)*normal);
+        scalar rhoEStar =
+            f*rhoNei*ENei + (pStarNei*SStar - pNei*UvNei)/stabilise(SNei - UvNei, small);
+
+        if (traceFlux)
+        {
+            rhoUPhi = rhoUStar*SStar + pStarNei*normal;
+            rhoEPhi = (rhoEStar + pStarNei)*SStar;
+        }
+        else
+        {
+            rhoUPhi = rhoUPhiNei + SNei*(rhoUStar - rhoUNei);
+            rhoEPhi = rhoEPhiNei + SNei*(rhoEStar - rhoENei);
+        }
+
+        p = pStarNei;
+        this->save(facei, patchi, UNei - (UvNei - phi)*normal, Uf_);
     }
     else
     {
-        alpha = alphaNei;
-        rho = rhoNei;
-        phi = UvNei*magSf;
-        U = UNei;
-        E = ENei;
-        p = pNei;
+        alpha = 0.5*(alphaOwn + alphaNei);
+        phi = 0.5*(UvOwn + UvNei);
+        rhoPhi = 0.5*(rhoOwn*UvOwn + rhoNei*UvNei);
+        rhoUPhi = 0.5*(rhoUPhiOwn + rhoUPhiNei);
+        rhoEPhi = 0.5*(rhoEPhiOwn + rhoEPhiNei);
+        p = 0.5*(pOwn + pNei);
+        this->save(facei, patchi, 0.5*(UOwn + UNei), Uf_);
+    }
+
+    // Hybrid HLLC/HLL near shocks (both sides of the face present and not
+    // traces): the HLL flux dissipates the contact and shear waves, which
+    // the HLLC flux leaves undamped across a strong shock aligned with the
+    // mesh (carbuncle)
+    if
+    (
+        hybridHLL_
+     && SOwn < 0 && SNei > 0
+     && ownValid && neiValid
+     && (!traceFlux || min(alphaOwn, alphaNei) >= alphaTrace_)
+    )
+    {
+        const scalar theta = this->getValue(facei, patchi, thetaHLL_);
+        if (theta > 0)
+        {
+            const scalar dS = SNei - SOwn;
+            const scalar rhoPhiHLL =
+                (
+                    SNei*rhoOwn*UvOwn - SOwn*rhoNei*UvNei
+                  + SOwn*SNei*(rhoNei - rhoOwn)
+                )/dS;
+            const vector rhoUPhiHLL =
+                (
+                    SNei*rhoUPhiOwn - SOwn*rhoUPhiNei
+                  + SOwn*SNei*(rhoUNei - rhoUOwn)
+                )/dS;
+            const scalar rhoEPhiHLL =
+                (
+                    SNei*rhoEPhiOwn - SOwn*rhoEPhiNei
+                  + SOwn*SNei*(rhoENei - rhoEOwn)
+                )/dS;
+
+            rhoPhi += theta*(rhoPhiHLL - rhoPhi);
+            rhoUPhi += theta*(rhoUPhiHLL - rhoUPhi);
+            rhoEPhi += theta*(rhoEPhiHLL - rhoEPhi);
+        }
     }
 
     this->save(facei, patchi, alpha, alphaf_);
-    this->save(facei, patchi, U, Uf_);
     this->save(facei, patchi, p, pf_);
 
-    alphaRhoPhi = alpha*rho*phi;
-    alphaRhoUPhi = alphaRhoPhi*U + alpha*p*Sf;
-    alphaRhoEPhi = alpha*phi*(rho*E + p) + phiMesh*alpha*p;
-    phi *= f;
+    // A residual (alpha <= 1e-6) upwind side carries no mass, so it carries
+    // no momentum or energy either. With the trace impedance its star
+    // pressure is the mixture pressure, which would otherwise put a
+    // pressure-work flux without mass into the neighbouring trace cell.
+    const bool upwindValid =
+        SOwn >= 0 ? ownValid
+      : SNei <= 0 ? neiValid
+      : SStar > 0 ? ownValid
+      : SStar < 0 ? neiValid
+      : (ownValid || neiValid);
+    const scalar alphaFlux = (traceFlux && !upwindValid) ? 0.0 : alpha;
+
+    alphaRhoPhi = alphaFlux*rhoPhi*magSf;
+    alphaRhoUPhi = alphaFlux*rhoUPhi*magSf;
+    alphaRhoEPhi = alphaFlux*rhoEPhi*magSf + phiMesh*alphaFlux*p;
+    phi *= magSf;
 }
 
 

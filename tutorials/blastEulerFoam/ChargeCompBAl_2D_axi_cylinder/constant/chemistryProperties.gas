@@ -1,0 +1,48 @@
+/*--------------------------------*- C++ -*----------------------------------*\
+  =========                 |
+  \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox
+   \\    /   O peration     | Website:  https://openfoam.org
+    \\  /    A nd           | Version:  12
+     \\/     M anipulation  |
+\*---------------------------------------------------------------------------*/
+FoamFile
+{
+    format      ascii;
+    class       dictionary;
+    location    "constant";
+    object      chemistryProperties;
+}
+// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
+
+chemistryType
+{
+    solver            ode;
+    method            standard;
+}
+
+chemistry           on;
+
+initialChemicalTimeStep 1e-08;
+
+// Local chemical equilibrium above Teq (at the cell's density and internal
+// energy); the GRI-3.0 H2/O2/CO/C1 mechanism (reactions.gas) below
+equilibrium
+{
+    Teq             2500;
+}
+
+EulerImplicitCoeffs
+{
+    cTauChem        1;
+}
+
+odeCoeffs
+{
+    solver          seulex;
+    absTol          1e-12;
+    relTol          1e-3;
+}
+
+#include "reactions.gas"
+
+// ************************************************************************* //

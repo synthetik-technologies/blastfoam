@@ -104,7 +104,7 @@ c4
         pMin            101300;
         useCOM          yes;
         radius          0.05;
-        vDet            7850;
+        vDet            8227.6; // CJ speed of the products JWL (utilities/thermo_fitter/check_programmed_burn.py)
     }
     residualRho     1e-06;
     residualAlpha   1e-06;

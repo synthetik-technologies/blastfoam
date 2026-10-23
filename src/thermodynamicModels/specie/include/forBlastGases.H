@@ -37,6 +37,7 @@ License
 #include "hConstBlastThermo.H"
 #include "eConstBlastThermo.H"
 #include "janafBlastThermo.H"
+#include "nasa9BlastThermo.H"
 #include "ePolynomialBlastThermo.H"
 
 #include "perfectGas.H"
@@ -47,6 +48,7 @@ License
 #include "stiffenedGas.H"
 #include "vanderWaals.H"
 #include "JWL.H"
+#include "eJWLC.H"
 
 #include "specieBlast.H"
 #include "rspecieBlast.H"
@@ -56,9 +58,10 @@ License
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
 #define forGasEqns(Mu, Cp, Macro, Args...)                                  \
-    forThermo(Mu, Cp, idealGas, specieBlast, Macro, Args);                  \
+    forThermo(Mu, Cp, idealGas,  specieBlast, Macro, Args);                  \
     forThermo(Mu, Cp, vanderWaals, specieBlast, Macro, Args);               \
-    forThermo(Mu, Cp, JWL, specieBlast, Macro, Args);
+    forThermo(Mu, Cp, JWL,       specieBlast, Macro, Args);                  \
+    forThermo(Mu, Cp, eJWLC,     specieBlast, Macro, Args);
 
 #define forGasThermos(Mu, Macro, Args...)                                   \
     forGasEqns(Mu, eConstThermo, Macro, Args);                              \
@@ -82,7 +85,8 @@ License
 #define forCoeffGasThermos(Mu, Macro, Args...)                              \
     forCoeffGasEqns(Mu, eConstThermo, Macro, Args);                         \
     forCoeffGasEqns(Mu, hConstThermo, Macro, Args);                         \
-    forCoeffGasEqns(Mu, janafThermo, Macro, Args);
+    forCoeffGasEqns(Mu, janafThermo, Macro, Args);                          \
+    forCoeffGasEqns(Mu, nasa9Thermo, Macro, Args);
 
 #define forCoeffGasTransports(Macro, Args...)                               \
     forCoeffGasThermos(constTransport, Macro, Args);                        \

@@ -75,10 +75,11 @@ Foam::kineticTheoryModels::viscosityModels::Syamlal::nu
 {
     const scalar sqrtPi = sqrt(constant::mathematical::pi);
 
-    return da*sqrt(Theta)*
+    return da*sqrt(max(Theta, dimensionedScalar(sqr(dimVelocity), small)))*
     (
         (4.0/5.0)*sqr(phase)*g0*(1.0 + e)/sqrtPi
-      + (1.0/15.0)*sqrtPi*g0*(1.0 + e)*(3.0*e - 1.0)*sqr(phase)/(3.0 - e)
+      + (1.0/6.0)*sqrtPi*phase*g0*(1.0 + e)*(3.0*e - 1.0)
+       /(14.0/5.0 - 6.0*e/5.0)
       + (1.0/6.0)*phase*sqrtPi/(3.0 - e)
     );
 }

@@ -93,6 +93,9 @@ protected:
         //- Minimum temperature
         scalar TLow_;
 
+        //- Maximum temperature
+        scalar THigh_;
+
         //- Residual volume fraction
         dimensionedScalar residualAlpha_;
 
@@ -112,7 +115,13 @@ protected:
             //- Return enthalpy/Internal energy [J/kg]
             volScalarField& heRef()
             {
-                return e_;
+                return this->e_;
+            }
+
+            //- Heat capacity at constant pressure [J/kg/K]
+            const volScalarField& CpRef() const
+            {
+                return Cp_;
             }
 
             //- Heat capacity at constant pressure [J/kg/K]
@@ -122,9 +131,21 @@ protected:
             }
 
             //- Heat capacity at constant volume [J/kg/K]
+            const volScalarField& CvRef() const
+            {
+                return Cv_;
+            }
+
+            //- Heat capacity at constant volume [J/kg/K]
             volScalarField& CvRef()
             {
                 return Cv_;
+            }
+
+            //- Thermal conductivity for enthalpy of mixture [kg/m/s]
+            const volScalarField& kappaRef() const
+            {
+                return kappa_;
             }
 
             //- Thermal conductivity for enthalpy of mixture [kg/m/s]
@@ -281,6 +302,11 @@ public:
         scalar TLow() const
         {
             return TLow_;
+        }
+
+        scalar THigh() const
+        {
+            return THigh_;
         }
 
         // Access functions

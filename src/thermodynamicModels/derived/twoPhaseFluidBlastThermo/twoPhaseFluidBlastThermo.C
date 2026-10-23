@@ -171,7 +171,8 @@ void Foam::twoPhaseFluidBlastThermo::calculate()
     this->kappa_.dimensions().reset(dimThermalConductivity);
     this->mu_.dimensions().reset(dimensionSet(1, -1, -1, 0, 0));
 
-    XiSum.max(small);
+    // Robust clamp for mixture denominator
+    XiSum.max(1e-6);
     this->p_ = pXiSum/XiSum;
     this->p_.correctBoundaryConditions();
 
@@ -187,10 +188,32 @@ void Foam::twoPhaseFluidBlastThermo::calculate()
         cSqrRhoXiSum
     );
 
+    // Debug output for extreme values (enable with DebugSwitches
+    // { twoPhaseFluid 1; })
+    if (debug)
+    {
+        forAll(this->p_, celli)
+        {
+            if (mag(this->p_[celli]) > 1e11 || std::isnan(this->p_[celli]))
+            {
+                 Pout << "Extreme/NaN at cell " << celli << " at time " << twoPhases::mesh().time().name() << nl
+                      << "  p: " << this->p_[celli] << " rho: " << this->rho_[celli] << " T: " << this->T_[celli] << nl
+                      << "  alpha1: " << this->alpha1()[celli] << " rho1: " << rho1_[celli] << " p1: " << thermo1_->p()[celli] << nl
+                      << "  alpha2: " << this->alpha2()[celli] << " rho2: " << rho2_[celli] << " p2: " << thermo2_->p()[celli] << nl
+                      << "  XiSum: " << XiSum[celli] << " cSqrRhoXiSum: " << cSqrRhoXiSum[celli] << nl
+                      << "  thermo1 cSqr: " << sqr(thermo1_->cellSpeedOfSound(thermo1_->p()[celli], celli)) << " thermo2 cSqr: " << sqr(thermo2_->cellSpeedOfSound(thermo2_->p()[celli], celli)) << endl;
+            }
+        }
+    }
+
     this->speedOfSound_ =
         sqrt
         (
-            cSqrRhoXiSum
+            max
+            (
+                cSqrRhoXiSum,
+                dimensionedScalar("small", cSqrRhoXiSum.dimensions(), small)
+            )
            /max(this->rho_*XiSum, this->residualRho_)
         );
 }

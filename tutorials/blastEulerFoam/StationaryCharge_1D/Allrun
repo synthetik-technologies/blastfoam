@@ -1,0 +1,24 @@
+#!/bin/sh
+cd ${0%/*} || exit 1    # run from this directory
+
+# Source tutorial run functions
+. $WM_PROJECT_DIR/bin/tools/RunFunctions
+
+# -- Create paraview file
+paraFoam -builtin -touch
+
+# -- Restore initial 0 directory from .orig files
+for f in 0/*.orig; do
+    cp "$f" "${f%.orig}"
+done
+
+# -- Create base mesh
+runApplication blockMesh
+
+# -- Set the charge
+runApplication setFields
+
+# -- Run calculation
+runApplication $(getApplication)
+
+# ----------------------------------------------------------------- end-of-file

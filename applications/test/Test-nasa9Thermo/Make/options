@@ -1,0 +1,10 @@
+EXE_INC = \
+    -I$(LIB_SRC)/thermophysicalModels/specie/lnInclude \
+    -I$(BLAST_DIR)/src/numerics/lnInclude \
+    -I$(BLAST_DIR)/src/thermodynamicModels/lnInclude
+
+EXE_LIBS = \
+    -lspecie \
+    -L$(BLAST_LIBBIN) \
+    -lblastNumerics \
+    -lblastThermodynamics

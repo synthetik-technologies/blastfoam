@@ -76,6 +76,21 @@ private:
         //- Const reference to density
         const volScalarField& rho_;
 
+        //- Name of pressure field
+        word pName_;
+
+        //- Const reference to pressure
+        const volScalarField& p_;
+
+        //- Minimum pressure for compression ignition
+        dimensionedScalar pMin_;
+
+        //- Pointer to volume fraction field
+        const volScalarField* alphaPtr_;
+
+        //- Residual volume fraction
+        scalar residualAlpha_;
+
         //- Detonation velocity
         dimensionedScalar vDet_;
 

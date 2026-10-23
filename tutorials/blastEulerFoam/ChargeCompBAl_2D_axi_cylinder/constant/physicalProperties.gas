@@ -1,0 +1,71 @@
+/*--------------------------------*- C++ -*----------------------------------*\
+  =========                 |
+  \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox
+   \\    /   O peration     | Website:  https://openfoam.org
+    \\  /    A nd           | Version:  12
+     \\/     M anipulation  |
+\*---------------------------------------------------------------------------*/
+FoamFile
+{
+    format      ascii;
+    class       dictionary;
+    location    "constant";
+    object      physicalProperties.gas;
+}
+// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
+
+type            reacting;
+thermoType
+{
+    transport       sutherland;
+    thermo          nasa9;
+    equationOfState AbelNobel;
+}
+
+// NASA-9 species data to 20 000 K (utilities/thermo_fitter/nasa9_species.py,
+// b and transport from ../ChargeCompBAl_1D_spherical_reacting/constant/
+// thermo.compressibleGas); local equilibrium above Teq, GRI-3.0 H2/O2/CO/C1
+// mechanism below (constant/chemistryProperties.gas, reactions.gas)
+species
+(
+    O2
+    N2
+    CO
+    H2O
+    CO2
+    NH3
+    CH4
+    C2H6
+    "C(gr)"
+    Al
+    "Al2O3(s)"
+    H2
+    O
+    N
+    NO
+    H
+    OH
+    AlO
+    HO2
+    H2O2
+    CH3
+    CH2O
+    HCO
+    CH3O
+    Al2O
+    AlO2
+    Al2O2
+    "Al2O3(L)"
+);
+
+#include "thermo.nasa9Gas"
+// Decode temperature cap (the nasa9 data end at 20 000 K and are
+// extrapolated with constant Cp above)
+THigh           50000;
+
+defaultSpecie   N2;
+
+residualRho     1e-06;
+residualAlpha   1e-06;
+
+// ************************************************************************* //

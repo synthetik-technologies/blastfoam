@@ -1,0 +1,63 @@
+/*--------------------------------*- C++ -*----------------------------------*\
+  =========                 |
+  \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox
+   \\    /   O peration     | Website:  https://openfoam.org
+    \\  /    A nd           | Version:  12
+     \\/     M anipulation  |
+\*---------------------------------------------------------------------------*/
+FoamFile
+{
+    version     2.0;
+    format      ascii;
+    class       dictionary;
+    location    "system";
+    object      setFieldsDict;
+}
+// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
+
+fields (alpha.compBAl alpha.Al alpha.gas);
+nBufferLayers 2;
+
+defaultFieldValues
+(
+    volScalarFieldValue alpha.compBAl 0
+    volScalarFieldValue alpha.Al 0
+    volScalarFieldValue alpha.gas 1
+    volScalarFieldValue lambda.compBAl 0
+);
+
+// Cylindrical charge about the axis (y), centred at the origin, of the
+// volume of the 0.05 m sphere of ChargeCompBAl_2D_axi_2m (0.953 kg). Allrun
+// sets the radius and half-length for the chosen length/diameter ratio.
+radius          0.0437;
+halfLength      0.0437;
+
+regions
+(
+    cylinderToCell
+    {
+        // The mesh covers y >= 0 (symmetry plane at the mid-plane)
+        point1 (0 0 0);
+        point2 (0 $halfLength 0);
+        radius $radius;
+
+        // Charge at the finest level, 0.5 mm
+        level 5;
+        refineInternal yes;
+        backup
+        {
+            point1 (0 0 0);
+            point2 (0 #calc "$halfLength + 0.01" 0);
+            radius #calc "$radius + 0.01";
+        }
+        fieldValues
+        (
+            volScalarFieldValue alpha.compBAl 0.818
+            volScalarFieldValue alpha.Al 0.182
+            volScalarFieldValue alpha.gas 0
+            volScalarFieldValue lambda.compBAl 0
+        );
+    }
+);
+
+// ************************************************************************* //

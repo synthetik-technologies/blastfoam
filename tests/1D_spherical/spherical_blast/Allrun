@@ -1,0 +1,26 @@
+#!/bin/sh
+cd ${0%/*} || exit 1    # run from this directory
+
+# Source tutorial run functions
+. $WM_PROJECT_DIR/bin/tools/RunFunctions
+
+# Clean previous time dirs and logs
+rm -rf [1-9]* 0.[0-9]* postProcessing log.* constant/polyMesh dynamicCode
+
+# Restore 0 directory fields
+for f in 0/*.orig; do
+    if [ -f "$f" ]; then
+        cp "$f" "0/$(basename "$f" .orig)"
+    fi
+done
+
+# -- Create base mesh
+runApplication blockMesh
+
+# -- Set the charge
+runApplication setRefinedFields
+
+# -- Run calculation
+runApplication blastFoam
+
+# ----------------------------------------------------------------- end-of-file

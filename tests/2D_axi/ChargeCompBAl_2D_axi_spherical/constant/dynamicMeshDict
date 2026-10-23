@@ -1,0 +1,65 @@
+/*--------------------------------*- C++ -*----------------------------------*\
+  =========                 |
+  \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox
+   \\    /   O peration     | Website:  https://openfoam.org
+    \\  /    A nd           | Version:  12
+     \\/     M anipulation  |
+\*---------------------------------------------------------------------------*/
+FoamFile
+{
+    format      binary;
+    class       dictionary;
+    location    "constant";
+    object      dynamicMeshDict;
+}
+// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
+
+// Refine the 2 mm base mesh by 2 levels (0.5 mm, the 1D cell size) at the
+// shock, the products/air contact and the Al cloud edge
+topoChanger
+{
+    libs            ( "libblastFvMeshTopoChangers.so" );
+    type            hexRefiner;
+
+    errorEstimator  multicomponent;
+    errorEstimators
+    (
+        density
+        {
+            errorEstimator      densityGradient;
+            lowerRefineLevel    0.05;
+            unrefineLevel       0.02;
+            maxRefinement       2;
+        }
+        pressure
+        {
+            errorEstimator      scaledDelta;
+            field               p;
+            lowerRefineLevel    0.05;
+            unrefineLevel       0.02;
+            maxRefinement       2;
+        }
+        Al
+        {
+            errorEstimator      scaledDelta;
+            field               alpha.Al;
+            // Jumps in alpha.Al above 1e-4 (relative to 1e-3)
+            minValue            1e-3;
+            lowerRefineLevel    0.1;
+            unrefineLevel       0.01;
+            maxRefinement       2;
+        }
+    );
+
+    refineInterval  1;
+    nBufferLayers   2;
+    dumpLevel       true;
+}
+
+distributor
+{
+    libs            ( "libblastFvMeshDistributors.so" );
+    type            redistributor;
+}
+
+// ************************************************************************* //

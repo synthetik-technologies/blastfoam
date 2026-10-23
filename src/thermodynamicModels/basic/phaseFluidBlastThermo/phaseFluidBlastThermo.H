@@ -90,6 +90,20 @@ protected:
                 return rho_;
             }
 
+            //- Return properties dictionary
+            virtual IOdictionary& properties()
+            {
+                NotImplemented;
+                return const_cast<IOdictionary&>(reinterpret_cast<const IOdictionary&>(dictionary::null));
+            }
+
+            //- Return properties dictionary
+            virtual const IOdictionary& properties() const
+            {
+                NotImplemented;
+                return reinterpret_cast<const IOdictionary&>(dictionary::null);
+            }
+
 public:
 
     //- Runtime type information

@@ -1,0 +1,78 @@
+/*--------------------------------*- C++ -*----------------------------------*\
+  | =========                 |                                                 |
+  | \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox           |
+  |  \\    /   O peration     | Version:  2.3.0                                 |
+  |   \\  /    A nd           | Web:      www.OpenFOAM.org                      |
+  |    \\/     M anipulation  |                                                 |
+  \*---------------------------------------------------------------------------*/
+FoamFile
+{
+  version     2.0;
+  format      ascii;
+  class       dictionary;
+  location    "system";
+  object      setFieldsDict;
+}
+// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
+
+fields (alpha.compBAl alpha.Al alpha.gas);
+nBufferLayers 5;
+
+defaultFieldValues
+(
+    volScalarFieldValue alpha.compBAl 0
+    volScalarFieldValue alpha.Al 0
+    volScalarFieldValue alpha.gas 1
+    volScalarFieldValue lambda.compBAl 0    
+);
+regions
+(
+    cylinderToCell
+    {
+        point1 (0 -.26 0);
+        point2 (0 .26 0);	
+        radius 0.26;
+
+        backup
+        {
+        point1 (0 -1 0);
+        point2 (0 1 0);	
+        radius 1;
+        }
+        level 0;
+        refineInternal no;
+
+        fieldValues
+        (
+            volScalarFieldValue alpha.compBAl 0.818
+            volScalarFieldValue alpha.Al 0.182
+            volScalarFieldValue alpha.gas 0
+        );
+    }
+
+    cylinderToCell
+    {
+        point1 (0 -.026 0);
+        point2 (0 .026 0);	
+        radius 0.026;
+
+        backup
+        {
+        point1 (0 -.1 0);
+        point2 (0 .1 0);	
+        radius .1;
+        }
+        level 0;
+        refineInternal yes;
+
+        fieldValues
+        (
+            volScalarFieldValue alpha.compBAl 0.818
+            volScalarFieldValue alpha.Al 0.182
+            volScalarFieldValue alpha.gas 0	    
+        );
+    }
+    
+);
+
+// ************************************************************************* //

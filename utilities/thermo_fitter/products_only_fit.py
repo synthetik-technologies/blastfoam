@@ -1,0 +1,284 @@
+#!/usr/bin/env python3
+"""
+products_only_fit.py: blastEulerFoam entries for an EuDetCode products-only
+eJWLC fit (CJDetonation ... --inert ... --jwl-products-only).
+
+The inert condensed material (e.g. Al) is a separate phase, so the fit,
+reference density and CJ state are those of the active products. The
+energy datum E0 is set so that the eJWLC isentrope energy at the transfer
+pressure equals the sensible energy of the gas phase (JANAF, Abel-Nobel)
+at the gas-EOS temperature of the same state:
+
+    V_t : p_s(V_t) = p_t                       (eJWLC isentrope)
+    T_t = p_t (v_t - b_mix)/R_mix              (Abel-Nobel gas)
+    E0  = e_gas(T_t) - e_s(V_t)|E0=0
+    omegaT = ln(T_CJ/T_t)/ln(V_t/V_CJ)         (T_s through T_CJ and T_t)
+
+e_gas is the blastFoam sensible energy, sum_k Y_k (Hs_k(T) - R_k T), with
+Hs_k relative to 298.15 K. The transfer composition is the EuDetCode
+freeze-out composition without the inert species, normalised.
+
+The detonation energy of the programmed burn lifts the reactants
+(eConst, Cv_r, at T0) onto the products datum through the Hugoniot:
+
+    e0 = e_s(V_CJ) - Cv_r T0 - p_CJ/2 (1/rho0 - 1/rho_CJ)
+
+Usage:
+    python3 products_only_fit.py <EuDetCode output dir> <gas case>
+        [--ptrans PA] [--T0 K] [--cv-reactants J/kg/K] [--inert NAME ...]
+
+<gas case> is a case whose constant/ holds the gas phase thermo
+(physicalProperties.gas with the species dictionaries) for every species
+of the freeze-out composition.
+"""
+
+import argparse
+import math
+import os
+import sys
+
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+import compute_omegaT as co  # noqa: E402
+
+R_UNIVERSAL = 8314.462618  # J/(kmol K)
+T_STD = 298.15
+
+
+def parse_eudet(directory):
+    """CJ state, active-phase data, freeze-out composition (cj_output.txt)
+    and JWL parameters (jwl_output.txt)."""
+    cj, comp = {}, {}
+    section = None
+    in_comp = False
+    with open(os.path.join(directory, "cj_output.txt")) as f:
+        for line in f:
+            line = line.strip()
+            if line.startswith("---"):
+                section = line.strip("- ")
+                in_comp = False
+                continue
+            if line.startswith("Composition (mass fractions)"):
+                in_comp = section == "Freeze-out Point"
+                continue
+            if ":" not in line:
+                continue
+            key, val = (s.strip() for s in line.split(":", 1))
+            try:
+                num = float(val.split()[0])
+            except (ValueError, IndexError):
+                continue
+            if in_comp:
+                comp[key] = num
+            else:
+                cj.setdefault(key, num)
+    jwl = {}
+    with open(os.path.join(directory, "jwl_output.txt")) as f:
+        for line in f:
+            if ":" in line:
+                key, val = (s.strip() for s in line.split(":", 1))
+                jwl[key] = float(val)
+    return cj, comp, jwl
+
+
+def species_data(gas, sp, T):
+    """(Ha(T) function [J/kg], R, b, W) of a gas species; JANAF (Tcommon,
+    low/highCpCoeffs) or nasa9 (Tswitch, coeffs) thermodynamics, both with
+    constant Cp outside the fit range, as in blastFoam."""
+    d = gas[sp]
+    W = co.scalar(d["specie"]["molWeight"])
+    Rs = R_UNIVERSAL/W
+    th = d["thermodynamics"]
+    b = co.scalar(d.get("equationOfState", {}).get("b", [0.0]))
+    if "Tswitch" in th:
+        Ts = [float(x) for x in th["Tswitch"] if x not in "()"]
+        rows, cur = [], None
+        for x in th["coeffs"][1:-1]:
+            if x == "(":
+                cur = []
+            elif x == ")":
+                rows.append(cur)
+            else:
+                cur.append(float(x))
+
+        def fit(Tf):
+            a = rows[-1]
+            for i in range(len(rows) - 1):
+                if Tf < Ts[i + 1]:
+                    a = rows[i]
+                    break
+            cp = a[0]/Tf**2 + a[1]/Tf + a[2] + Tf*(a[3] + Tf*(a[4] + Tf*(a[5] + Tf*a[6])))
+            h = (-a[0]/Tf + a[1]*math.log(Tf) + a[7]
+                 + Tf*(a[2] + Tf*(a[3]/2 + Tf*(a[4]/3 + Tf*(a[5]/4 + Tf*a[6]/5)))))
+            return cp, h
+
+        def ha(Tv):
+            Tf = min(max(Tv, Ts[0]), Ts[-1])
+            cp, h = fit(Tf)
+            return Rs*(h + cp*(Tv - Tf))
+    else:
+        Tc = co.scalar(th["Tcommon"])
+
+        def ha(Tv):
+            a = [float(x) for x in th["highCpCoeffs" if Tv > Tc else "lowCpCoeffs"]
+                 if x not in "()"]
+            return Rs*(((((a[4]/5*Tv + a[3]/4)*Tv + a[2]/3)*Tv + a[1]/2)*Tv + a[0])*Tv
+                       + a[5])
+    return ha, Rs, b, W
+
+
+def e_sensible(gas, Y, T):
+    e = 0.0
+    for sp, y in Y.items():
+        ha, Rs, _, _ = species_data(gas, sp, T)
+        e += y*(ha(T) - ha(T_STD) - Rs*T)
+    return e
+
+
+def main():
+    ap = argparse.ArgumentParser(description=__doc__.split("\n")[1])
+    ap.add_argument("eudet_dir")
+    ap.add_argument("gas_case")
+    ap.add_argument("--ptrans", type=float, default=1.0e7)
+    ap.add_argument("--T0", type=float, default=288.0)
+    ap.add_argument("--cv-reactants", type=float, default=1030.0)
+    ap.add_argument("--inert", nargs="*", default=["Al(s)", "Al"])
+    args = ap.parse_args()
+    r = compute(args.eudet_dir, args.gas_case, args.ptrans, args.T0,
+                args.cv_reactants, args.inert)
+    report(args, r)
+
+
+def compute(eudet_dir, gas_case, ptrans=1.0e7, T0=288.0, cv_reactants=1030.0,
+            inert=("Al(s)", "Al")):
+    """Fit entries and transfer state; returns a dict (see report())."""
+    cj, comp, jwl = parse_eudet(eudet_dir)
+    rho0 = cj["Reference Density (rho0_eq, kg/m^3)"]
+    rho_CJ = cj["CJ State Density (rho_cj_eq, kg/m^3)"]
+    T_CJ = cj["CJ Temperature (K)"]
+    p_CJ = cj["CJ Pressure (Pa)"]
+    D = cj["CJ Velocity (m/s)"]
+    A, B, C = (jwl[k]*1e9 for k in ("A", "B", "C"))
+    R1, R2, w = jwl["R1"], jwl["R2"], jwl["omega"]
+
+    gas = co.phase_dict(os.path.join(gas_case, "constant"), "gas")
+    Y = {k: v for k, v in comp.items() if k not in inert}
+    s = sum(Y.values())
+    Y = {k: v/s for k, v in Y.items()}
+    missing = [k for k in Y if k not in gas]
+    if missing:
+        sys.exit(f"Species {missing} not in the gas thermo of {gas_case}")
+
+    def ps(V):
+        return A*math.exp(-R1*V) + B*math.exp(-R2*V) + C*V**(-(w + 1))
+
+    def eb(V):
+        return (A/R1*math.exp(-R1*V) + B/R2*math.exp(-R2*V)
+                + C/w*V**(-w))/rho0
+
+    lo, hi = 1e-3, 1e5
+    for _ in range(200):
+        mid = math.sqrt(lo*hi)
+        lo, hi = (mid, hi) if ps(mid) > ptrans else (lo, mid)
+    V_t = math.sqrt(lo*hi)
+    v_t = V_t/rho0
+
+    R_mix = sum(y*species_data(gas, k, 1000)[1] for k, y in Y.items())
+    b_mix = sum(y*species_data(gas, k, 1000)[2] for k, y in Y.items())
+    W_mix = 1/sum(y/species_data(gas, k, 1000)[3] for k, y in Y.items())
+    T_t = ptrans*(v_t - b_mix)/R_mix
+
+    E0 = e_sensible(gas, Y, T_t) - eb(V_t)
+    V_CJ = rho0/rho_CJ
+    omegaT = math.log(T_CJ/T_t)/math.log(V_t/V_CJ)
+    es_CJ = eb(V_CJ) + E0
+    hug = 0.5*p_CJ*(1/rho0 - 1/rho_CJ)
+    e0 = es_CJ - cv_reactants*T0 - hug
+
+    return dict(cj=cj, Y=Y, gas=gas, D=D, p_CJ=p_CJ, T_CJ=T_CJ, rho0=rho0,
+                rho_CJ=rho_CJ, A=A, B=B, C=C, R1=R1, R2=R2, w=w, V_t=V_t,
+                v_t=v_t, T_t=T_t, R_mix=R_mix, b_mix=b_mix, W_mix=W_mix,
+                E0=E0, V_CJ=V_CJ, omegaT=omegaT, es_CJ=es_CJ, hug=hug, e0=e0,
+                ptrans=ptrans)
+
+
+def burn_consistency(r, e_reactants, p0=101325.0):
+    """Rayleigh speed through the CJ point, CJ speed (minimum on the
+    Hugoniot) and weak-branch pressure at D of the products phase alone,
+    with the reactant energy e_reactants + e0 released at the front."""
+    from scipy.optimize import brentq, minimize_scalar
+    rho0, A, B, C, R1, R2, w = (r[k] for k in ("rho0", "A", "B", "C", "R1", "R2", "w"))
+    v0 = 1/rho0
+    e_r = e_reactants + r["e0"]
+
+    def es(V):
+        return v0*(A/R1*math.exp(-R1*V) + B/R2*math.exp(-R2*V) + C/w*V**(-w)) + r["E0"]
+
+    def ps(V):
+        return A*math.exp(-R1*V) + B*math.exp(-R2*V) + C*V**(-(w + 1))
+
+    def p_hug(V):
+        v = V*v0
+        return (ps(V) + w/v*(e_r + 0.5*p0*(v0 - v) - es(V)))/(1 - w/v*0.5*(v0 - v))
+
+    def speed(V):
+        return v0*math.sqrt(max(p_hug(V) - p0, 0)/(v0 - V*v0))
+
+    V_CJ = r["V_CJ"]
+    D_ray = v0*math.sqrt((r["p_CJ"] - p0)/(v0 - V_CJ*v0))
+    m = minimize_scalar(speed, bounds=(0.3, 0.99), method="bounded")
+    D_eos = speed(m.x)
+    p_weak = float("nan")
+    if r["D"] > D_eos:
+        V_w = brentq(lambda V: speed(V) - r["D"], m.x, 0.999)
+        p_weak = p_hug(V_w)
+    return D_ray, D_eos, p_weak
+
+
+def report(args, r):
+    """Print the blastEulerFoam dictionary entries."""
+    (cj, Y, D, p_CJ, V_t, rho0, T_t, R_mix, b_mix, W_mix, A, B, C, R1, R2,
+     w, T_CJ, rho_CJ, omegaT, E0, es_CJ, hug, e0) = (
+        r[k] for k in (
+            "cj", "Y", "D", "p_CJ", "V_t", "rho0", "T_t", "R_mix", "b_mix",
+            "W_mix", "A", "B", "C", "R1", "R2", "w", "T_CJ", "rho_CJ",
+            "omegaT", "E0", "es_CJ", "hug", "e0"))
+    print(f"// EuDetCode {args.eudet_dir}: D {D:.2f} m/s, p_CJ {p_CJ:.6g} Pa")
+    print(f"// transfer {args.ptrans/1e5:g} bar: V {V_t:.4f}, "
+          f"rho {rho0/V_t:.6f} kg/m3, T {T_t:.2f} K, "
+          f"R_mix {R_mix:.3f}, b_mix {b_mix:.4e}, W_gas {W_mix:.3f}")
+    print("equationOfState")
+    print("{")
+    print(f"    rho0            {rho0:g};")
+    for k, v in (("A", A), ("B", B), ("C", C)):
+        print(f"    {k:<16}{v:.6g};")
+    print(f"    R1              {R1:g};")
+    print(f"    R2              {R2:g};")
+    print(f"    omega           {w:g};")
+    print(f"    T_CJ            {T_CJ:g};")
+    print(f"    rho_CJ          {rho_CJ:g};")
+    print(f"    omegaT          {omegaT:.6f};")
+    print(f"    E0              {E0:.2f};")
+    print("}")
+    print(f"// active molar mass {cj['Molar Mass (W_eq, kg/mol)']*1e3:.3f} "
+          f"kg/kmol")
+    print(f"// e0 = e_s(V_CJ) - Cv_r*T0 - 0.5*p_CJ*(1/rho0 - 1/rho_CJ)")
+    print(f"//    = {es_CJ:.6g} - {args.cv_reactants*args.T0:.6g} "
+          f"- {hug:.6g} = {e0:.6g} J/kg")
+    # Programmed-burn consistency of the products phase alone (Al not
+    # included): the products Hugoniot passes through the CJ point by the
+    # choice of e0; a burn faster than the CJ speed of this Hugoniot runs on
+    # its weak branch (pressure slightly below p_CJ, no growth), a slower one
+    # has no steady solution and is overdriven (pressure grows at the front)
+    D_ray, D_eos, p_weak = burn_consistency(r, args.cv_reactants*args.T0)
+    print(f"// products alone: Rayleigh speed through the CJ point {D_ray:.1f} m/s, "
+          f"CJ speed of the products EOS {D_eos:.1f} m/s, pressure on the weak branch "
+          f"at D {p_weak/1e9:.2f} GPa (p_CJ {p_CJ/1e9:.2f})")
+    if D < D_eos:
+        print("// WARNING: burn speed below the CJ speed of the products EOS: overdriven front")
+    print("// transfer targetFractions:")
+    for k, y in Y.items():
+        print(f"//     {k:<12}{y:.8f};")
+
+
+if __name__ == "__main__":
+    main()

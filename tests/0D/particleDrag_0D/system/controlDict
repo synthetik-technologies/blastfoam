@@ -1,0 +1,71 @@
+
+/*--------------------------------*- C++ -*----------------------------------*\
+  =========                 |
+  \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox
+   \\    /   O peration     | Website:  https://openfoam.org
+    \\  /    A nd           | Version:  12
+     \\/     M anipulation  |
+\*---------------------------------------------------------------------------*/
+FoamFile
+{
+    version     2.0;
+    format      ascii;
+    class       dictionary;
+    location    "system";
+    object      controlDict;
+}
+// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
+
+
+
+application     blastEulerFoam;
+
+startFrom       startTime;
+
+startTime       0;
+
+stopAt          endTime;
+
+endTime         END_TIME;
+
+libs            ( "libblastFiniteVolume.so" );
+
+writeControl    timeStep;
+
+writeInterval   100000;
+
+writeFormat     ascii;
+
+writePrecision  8;
+
+writeCompression off;
+
+timeFormat      general;
+
+timePrecision   6;
+
+runTimeModifiable true;
+
+adjustTimeStep  no;
+
+deltaT          DELTA_T;
+
+maxCo           0.5;
+
+functions
+{
+    velocity
+    {
+        type            volFieldValue;
+        libs            (fieldFunctionObjects);
+        select          all;
+        operation       volAverage;
+        fields          (U.Al U.gas T.Al T.gas);
+        writeFields     false;
+        writeControl    timeStep;
+        writeInterval   1;
+        log             false;
+    }
+}
+
+// ************************************************************************* //

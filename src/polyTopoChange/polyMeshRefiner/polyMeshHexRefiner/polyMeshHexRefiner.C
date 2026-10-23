@@ -1453,6 +1453,21 @@ bool Foam::polyMeshHexRefiner::refine
         // Cells marked for refinement or otherwise protected from unrefinement.
         PackedBoolList refineCell(mesh_.nCells());
 
+        // Cells above their maximum level (the maximum can decrease with
+        // time): coarsened even where the error is above unrefineLevel
+        PackedBoolList overCap(mesh_.nCells());
+        {
+            labelList maxRefinement(maxCellLevel);
+            setMaxCellLevel(maxRefinement);
+            forAll(overCap, celli)
+            {
+                if (cellLevel()[celli] > maxRefinement[celli])
+                {
+                    overCap.set(celli, 1);
+                }
+            }
+        }
+
         if (canRefine(true))
         {
             labelList maxRefinement(maxCellLevel);
@@ -1527,6 +1542,7 @@ bool Foam::polyMeshHexRefiner::refine
                     const labelList& reverseCellMap = map().reverseCellMap();
 
                     PackedBoolList newRefineCell(cellMap.size());
+                    PackedBoolList newOverCap(cellMap.size());
 
                     forAll(cellMap, celli)
                     {
@@ -1543,9 +1559,11 @@ bool Foam::polyMeshHexRefiner::refine
                         else
                         {
                             newRefineCell.set(celli, refineCell.get(oldCelli));
+                            newOverCap.set(celli, overCap.get(oldCelli));
                         }
                     }
                     refineCell.transfer(newRefineCell);
+                    overCap.transfer(newOverCap);
                 }
 
                 hasChanged = true;
@@ -1584,6 +1602,18 @@ bool Foam::polyMeshHexRefiner::refine
                 }
             }
 
+            // Cells above their maximum level are unprotected and taken as
+            // below unrefineLevel
+            scalarField unrefineError(error);
+            forAll(overCap, celli)
+            {
+                if (overCap.get(celli))
+                {
+                    refineCell.set(celli, false);
+                    unrefineError[celli] = -great;
+                }
+            }
+
             // Select unrefineable points that are not marked in refineCell
             labelList elemsToUnrefine
             (
@@ -1591,7 +1621,7 @@ bool Foam::polyMeshHexRefiner::refine
                 (
                     unrefineLevel,
                     refineCell,
-                    maxCellField(error)
+                    maxCellField(unrefineError)
                 )
             );
 

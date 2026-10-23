@@ -50,277 +50,161 @@ SourceFiles
 
 #include "autoPtr.H"
 
-namespace Foam
-{
+namespace Foam {
 
 // Forward declaration of friend functions and operators
 
-template<class Specie> class AbelNobelSG;
+template <class Specie> class AbelNobelSG;
 
-template<class Specie>
-inline AbelNobelSG<Specie> operator+
-(
-    const AbelNobelSG<Specie>&,
-    const AbelNobelSG<Specie>&
-);
+template <class Specie>
+inline AbelNobelSG<Specie> operator+(const AbelNobelSG<Specie> &,
+                                     const AbelNobelSG<Specie> &);
 
-template<class Specie>
-inline AbelNobelSG<Specie> operator*
-(
-    const scalar,
-    const AbelNobelSG<Specie>&
-);
+template <class Specie>
+inline AbelNobelSG<Specie> operator*(const scalar, const AbelNobelSG<Specie> &);
 
-template<class Specie>
-inline AbelNobelSG<Specie> operator==
-(
-    const AbelNobelSG<Specie>&,
-    const AbelNobelSG<Specie>&
-);
+template <class Specie>
+inline AbelNobelSG<Specie> operator==(const AbelNobelSG<Specie> &,
+                                      const AbelNobelSG<Specie> &);
 
-template<class Specie>
-Ostream& operator<<
-(
-    Ostream&,
-    const AbelNobelSG<Specie>&
-);
+template <class Specie>
+Ostream &operator<<(Ostream &, const AbelNobelSG<Specie> &);
 
 /*---------------------------------------------------------------------------*\
                            Class AbelNobelSG Declaration
 \*---------------------------------------------------------------------------*/
 
-template<class Specie>
-class AbelNobelSG
-:
-    public Specie
-{
-// Private data
+template <class Specie> class AbelNobelSG : public Specie {
+  // Private data
 
-    //- Coefficients
-    scalar b_;
-    scalar gamma_;
-    scalar pInf_;
-    scalar Cv_;
-    scalar pCav_;
+  //- Coefficients
 
+  //- Co-volume [m^3/kg]
+  scalar b_;
+
+  //- Ratio of specific heats
+  scalar gamma_;
+
+  //- Reference pressure [Pa]
+  scalar pInf_;
+
+  //- Specific heat at constant volume [J/kg/K]
+  scalar Cv_;
+
+  //- Vaporization pressure [Pa]
+  scalar pCav_;
 
 public:
+  // Constructors
 
-    // Constructors
+  //- Construct from components
+  inline AbelNobelSG(const Specie &sp, const scalar b, const scalar gamma,
+                     const scalar pInf, const scalar Cv);
 
-        //- Construct from components
-        inline AbelNobelSG
-        (
-            const Specie& sp,
-            const scalar b,
-            const scalar gamma,
-            const scalar pInf,
-            const scalar Cv
-        );
+  //- Construct from dictionary
+  AbelNobelSG(const dictionary &dict);
 
-        //- Construct from dictionary
-        AbelNobelSG(const dictionary& dict);
+  //- Construct as named copy
+  inline AbelNobelSG(const word &name, const AbelNobelSG &);
 
-        //- Construct as named copy
-        inline AbelNobelSG
-        (
-            const word& name,
-            const AbelNobelSG&
-        );
+  //- Construct and return a clone
+  inline autoPtr<AbelNobelSG> clone() const;
 
-        //- Construct and return a clone
-        inline autoPtr<AbelNobelSG> clone() const;
+  // Selector from dictionary
+  inline static autoPtr<AbelNobelSG> New(const dictionary &dict);
 
-        // Selector from dictionary
-        inline static autoPtr<AbelNobelSG> New
-        (
-            const dictionary& dict
-        );
+  // Member Functions
 
+  //- Return the instantiated type name
+  static word typeName() {
+    return "AbelNobelSG<" + word(Specie::typeName_()) + '>';
+  }
 
-    // Member Functions
+  //- Is temperature used
+  static bool temperatureBased() { return true; }
 
-        //- Return the instantiated type name
-        static word typeName()
-        {
-            return
-                "AbelNobelSG<"
-            + word(Specie::typeName_()) + '>';
-        }
+  //- Is this a solid equation of state
+  static bool solid() { return false; }
 
-        //- Is temperature used
-        static bool temperatureBased()
-        {
-            return true;
-        }
+  //- Return pressure optionally limited pressure
+  inline scalar p(const scalar rho, const scalar e, const scalar T,
+                  const bool limit = true) const;
 
-        //- Is this a solid equation of state
-        static bool solid()
-        {
-            return false;
-        }
+  //- Return unlimited pressure
+  inline scalar pRhoT(const scalar rho, const scalar T) const;
 
-        //- Return pressure optionally limited pressure
-        inline scalar p
-        (
-            const scalar rho,
-            const scalar e,
-            const scalar T,
-            const bool limit = true
-        ) const;
+  //- Return density given temperature and pressure
+  inline scalar rho(const scalar p, const scalar T) const;
 
-        //- Return unlimited pressure
-        inline scalar pRhoT
-        (
-            const scalar rho,
-            const scalar T
-        ) const;
+  //- Return energy given pressure and density
+  inline scalar ePRho(const scalar p, const scalar rho) const {
+    NotImplemented;
+    return 0.0;
+  }
 
-        //- Return density given temperature and pressure
-        inline scalar rho(const scalar p, const scalar T) const;
+  //- Return the MieGruniesen coefficient
+  inline scalar Gamma(const scalar rho, const scalar e, const scalar T,
+                      const scalar cv) const;
 
-        //- Return energy given pressure and density
-        inline scalar ePRho(const scalar p, const scalar rho) const
-        {
-            NotImplemented;
-            return 0.0;
-        }
+  //- Return the speed of sound
+  inline scalar cSqr(const scalar p, const scalar rho, const scalar e,
+                     const scalar T, const scalar cv) const;
 
-        //- Return the MieGruniesen coefficient
-        inline scalar Gamma
-        (
-            const scalar rho,
-            const scalar e,
-            const scalar T,
-            const scalar cv
-        ) const;
+  //- Return derivative of pressure w.r.t density
+  inline scalar dpdv(const scalar rho, const scalar e, const scalar T) const;
 
-        //- Return the speed of sound
-        inline scalar cSqr
-        (
-            const scalar p,
-            const scalar rho,
-            const scalar e,
-            const scalar T,
-            const scalar cv
-        ) const;
+  //- Return derivative of pressure w.r.t. internal energy
+  inline scalar dpde(const scalar rho, const scalar e, const scalar T) const;
 
-        //- Return derivative of pressure w.r.t density
-        inline scalar dpdv
-        (
-            const scalar rho,
-            const scalar e,
-            const scalar T
-        ) const;
+  //- Return derivative of pressure w.r.t. Temperature
+  inline scalar dpdT(const scalar rho, const scalar e, const scalar T) const;
 
-        //- Return derivative of pressure w.r.t. internal energy
-        inline scalar dpde
-        (
-            const scalar rho,
-            const scalar e,
-            const scalar T
-        ) const;
+  //- Internal energy correction [J/kg]
+  inline scalar E(const scalar rho, const scalar e, const scalar T) const;
 
-        //- Return derivative of pressure w.r.t. Temperature
-        inline scalar dpdT
-        (
-            const scalar rho,
-            const scalar e,
-            const scalar T
-        ) const;
+  //- Enthalpy correction [J/kg]
+  inline scalar H(const scalar rho, const scalar e, const scalar T) const;
 
-        //- Internal energy correction [J/kg]
-        inline scalar E
-        (
-            const scalar rho,
-            const scalar e,
-            const scalar T
-        ) const;
+  //- Heat capacity at constant volume [J/kg/K]
+  inline scalar Cv(const scalar rho, const scalar e, const scalar T) const;
 
-        //- Enthalpy correction [J/kg]
-        inline scalar H
-        (
-            const scalar rho,
-            const scalar e,
-            const scalar T
-        ) const;
+  //- Heat capacity at constant pressure [J/kg/K]
+  inline scalar Cp(const scalar rho, const scalar e, const scalar T) const;
 
-        //- Heat capacity at constant volume [J/kg/K]
-        inline scalar Cv
-        (
-            const scalar rho,
-            const scalar e,
-            const scalar T
-        ) const;
+  //- Heat capacity difference [J/kg/K]
+  inline scalar CpMCv(const scalar rho, const scalar e, const scalar T,
+                      const scalar CpCv) const;
 
-        //- Heat capacity at constant pressure [J/kg/K]
-        inline scalar Cp
-        (
-            const scalar rho,
-            const scalar e,
-            const scalar T
-        ) const;
+  //- Return entropy contribution to the integral of Cp/T [J/kg/K]
+  inline scalar Sp(const scalar p, const scalar T) const;
 
-        //- Heat capacity difference [J/kg/K]
-        inline scalar CpMCv
-        (
-            const scalar rho,
-            const scalar e,
-            const scalar T,
-            const scalar CpCv
-        ) const;
+  //- Return entropy contribution to the integral of Cv/T [J/kg/K]
+  inline scalar Sv(const scalar p, const scalar T) const;
 
+  // IO
 
+  //- Write to Ostream
+  void write(Ostream &os) const;
 
-        //- Return entropy contribution to the integral of Cp/T [J/kg/K]
-        inline scalar Sp(const scalar p, const scalar T) const;
+  // Member operators
 
-        //- Return entropy contribution to the integral of Cv/T [J/kg/K]
-        inline scalar Sv(const scalar p, const scalar T) const;
+  inline void operator+=(const AbelNobelSG &);
+  inline void operator*=(const scalar);
 
+  // Friend operators
 
-        // IO
+  friend AbelNobelSG operator+
+      <Specie>(const AbelNobelSG &, const AbelNobelSG &);
 
-            //- Write to Ostream
-            void write(Ostream& os) const;
+  friend AbelNobelSG operator* <Specie>(const scalar s, const AbelNobelSG &);
 
+  friend AbelNobelSG operator==
+      <Specie>(const AbelNobelSG &, const AbelNobelSG &);
 
-    // Member operators
+  // Ostream Operator
 
-        inline void operator+=(const AbelNobelSG&);
-        inline void operator*=(const scalar);
-
-
-    // Friend operators
-
-        friend AbelNobelSG operator+ <Specie>
-        (
-            const AbelNobelSG&,
-            const AbelNobelSG&
-        );
-
-        friend AbelNobelSG operator* <Specie>
-        (
-            const scalar s,
-            const AbelNobelSG&
-        );
-
-        friend AbelNobelSG operator== <Specie>
-        (
-            const AbelNobelSG&,
-            const AbelNobelSG&
-        );
-
-
-    // Ostream Operator
-
-        friend Ostream& operator<< <Specie>
-        (
-            Ostream&,
-            const AbelNobelSG&
-        );
+  friend Ostream &operator<< <Specie>(Ostream &, const AbelNobelSG &);
 };
-
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
@@ -331,7 +215,7 @@ public:
 #include "AbelNobelSGI.H"
 
 #ifdef NoRepository
-    #include "AbelNobelSG.C"
+#include "AbelNobelSG.C"
 #endif
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //

@@ -1,0 +1,17 @@
+#!/bin/sh
+cd "${0%/*}" || exit
+. "${WM_PROJECT_DIR:?}"/bin/tools/RunFunctions
+
+# Usage: Allrun <d0> <p> <T> <alpha> <deltaT> <endTime> <Y> <Tign> <Textinction>
+#               [<Tp> <Kh> <ignitedFraction>]
+#   Y: gas mass fractions, e.g. O2=0.2331,N2=0.7669
+python3 $BLAST_DIR/utilities/thermo_fitter/nasa9_species.py \
+    --base $BLAST_DIR/tests/1D_spherical/ChargeCompBAl_1D_spherical_reacting/constant/thermo.compressibleGas \
+    --species O2 N2 H2O CO2 H2 CO 'Al2O3(s)' 'Al2O3(L)' -o constant/thermo.nasa9Gas > log.nasa9_species 2>&1
+
+python3 setup_case.py --d "$1" --p "$2" --T "$3" --alpha "$4" \
+    --deltaT "$5" --endTime "$6" --Y "$7" --Tign "$8" --Textinction "$9" \
+    --Tp "${10:-$3}" --Kh "${11:-0}" --ignitedFraction "${12:-false}" > log.setup_case 2>&1
+
+runApplication blockMesh
+runApplication $(getApplication)

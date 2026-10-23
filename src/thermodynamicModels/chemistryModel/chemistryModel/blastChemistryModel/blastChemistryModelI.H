@@ -38,9 +38,10 @@ Foam::blastChemistryModel::mixture() const
 }
 
 
-inline const Foam::blastThermo& Foam::blastChemistryModel::thermo() const
+inline const Foam::multicomponentBlastThermo&
+Foam::blastChemistryModel::thermo() const
 {
-    return thermo_;
+    return mixture_;
 }
 
 

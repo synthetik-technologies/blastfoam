@@ -27,6 +27,32 @@ Class
 Description
     Reacting diameter model used for mass transfer
 
+    With an optional oxidiser phase the burn rate is scaled by the fraction
+    of the surrounding fluid volume that this phase occupies and, with
+    oxidiser species, by min(1, sum of their mass fractions/YoxidiserRef):
+
+    \verbatim
+        oxidiserPhase   gas;
+        oxidiserSpecies (O2 CO2 H2O);   // optional
+        YoxidiserRef    0.24;           // full rate at this mass fraction
+    \endverbatim
+
+    Without oxidiserPhase the particles burn wherever the rate model allows.
+
+    With ignitedFraction the ignition is tracked by the field ignited.<phase>,
+    the fraction of the particles that have ignited. It is transported with
+    the particle volume flux (as the diameter), set to one where the particle
+    temperature reaches Tign, and reset to zero below alphaMin; the burn rate
+    of the rate model (applied to burning particles, without its own
+    ignition check) is multiplied by it. Without it, a rate model such as
+    Beckstead keeps burning wherever the cell-mean diameter is below d0, so
+    the burning spreads with the mixing of the diameter field.
+
+    \verbatim
+        ignitedFraction true;       // optional, default false
+        Tign            2050;       // ignition temperature [K]
+    \endverbatim
+
 SourceFiles
     reactingDiameterModel.C
 
@@ -64,11 +90,42 @@ class reactingDiameterModel
     //- Name of temperature field
     const word TName_;
 
+    //- Phase carrying the oxidiser (empty: no oxidiser limit)
+    const word oxidiserPhase_;
+
+    //- Oxidiser species in the oxidiser phase (empty: the whole phase)
+    const wordList oxidiserSpecies_;
+
+    //- Oxidiser mass fraction that gives the full burn rate
+    const scalar YoxidiserRef_;
+
+    //- Volume fraction below which the diameter is reset to d0 and the
+    //  particles do not burn
+    const scalar alphaMin_;
+
+    //- Track the ignited fraction of the particles
+    const bool ignitedFraction_;
+
+    //- Ignition temperature (with ignitedFraction)
+    const scalar Tign_;
+
     //- Number density
     volScalarField N_;
 
+    //- Initial diameter field
+    volScalarField d0_;
+
     //- Stored change in volume per unit time
     volScalarField dVdt_;
+
+    //- Fraction of the particles that have ignited
+    volScalarField ignited_;
+
+
+    // Private Member Functions
+
+        //- Burn rate scaling by the available oxidiser, in [0, 1]
+        tmp<volScalarField> oxidiserFactor() const;
 
 public:
 
@@ -98,9 +155,27 @@ public:
         //- Solve sub-step stepi given pressure and temperature fields
         virtual void solve(const volScalarField& p, const volScalarField& T);
 
+        //- Return initial unburned diameter field
+        virtual const volScalarField& d0() const
+        {
+            return d0_;
+        }
+
+        //- Return initial unburned diameter for a cell
+        virtual scalar celld0(const label celli) const
+        {
+            return d0_[celli];
+        }
+
         //- Return change in radius per unit time
         //  Only used in mass transfer
         virtual tmp<volScalarField> dMdt() const;
+
+        //- Reaction rate
+        virtual const diameterReactionRate* reactionRate() const
+        {
+            return rate_.valid() ? &rate_() : nullptr;
+        }
 };
 
 

@@ -8,6 +8,10 @@
 *.bak
 *.bak[0-9][0-9]
 \#*\#
+__pycache__/
+*.pyc
+modules/
+!applications/modules/
 
 # File-browser settings - anywhere
 .directory
@@ -91,3 +95,32 @@ doc/Doxygen/DTAGS
 
 # Ignore the test directory
 /tutorialsTest
+
+# LaTeX auxiliary files
+*.aux
+*.log
+*.out
+*.toc
+*.bbl
+*.blg
+*.fls
+*.fdb_latexmk
+*.synctex.gz
+
+# Data written by the test verifiers for the report figures
+tests/**/*.npz
+tests/0D/nasa9_thermo/
+tests/0D/equilibrium/
+tests/0D/equilibrium_chemistry/
+tests/1D/shock_dissociating_air/constant/thermo.nasa9Air
+tests/0D/equilibriumChemistry_0D/constant/thermo.nasa9Gas
+tests/0D/gas_kinetics/
+tests/0D/particle_drag/
+tests/0D/particle_heating/
+tests/0D/al_burning/
+tests/0D/al_burning_products/
+tests/0D/al_flame/
+tests/0D/alBurning_0D/constant/thermo.nasa9Gas
+tests/0D/alBurningProducts_0D/constant/thermo.nasa9Gas
+tests/0D/gasKinetics_0D/constant/thermo.nasa9Gas
+tests/0D/gasKinetics_0D/constant/reactions.gas

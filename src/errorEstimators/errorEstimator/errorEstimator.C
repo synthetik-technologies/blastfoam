@@ -573,7 +573,7 @@ Foam::labelList Foam::errorEstimator::maxRefinement() const
                 {
                     level++;
                 }
-                maxLevel[celli] = (maxLevel[celli], level);
+                maxLevel[celli] = max(maxLevel[celli], level);
             }
         }
 

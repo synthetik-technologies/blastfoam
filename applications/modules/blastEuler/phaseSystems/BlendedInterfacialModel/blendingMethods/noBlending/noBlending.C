@@ -52,17 +52,24 @@ Foam::blendingMethods::noBlending::noBlending
 )
 :
     blendingMethod(dict),
-    continuousPhase_(dict.lookupOrDefault("continuousPhase", word::null)),
+    continuousPhases_
+    (
+        dict.found("continuousPhases")
+      ? dict.lookup<wordList>("continuousPhases")
+      : dict.found("continuousPhase")
+      ? wordList(1, dict.lookup<word>("continuousPhase"))
+      : wordList()
+    ),
     dispersedPhase_(dict.lookupOrDefault("dispersedPhase", word::null))
 {
-    if (continuousPhase_.empty() && dispersedPhase_.empty())
+    if (continuousPhases_.empty() && dispersedPhase_.empty())
     {
         FatalIOErrorInFunction(dict)
             << "Either continuousPhase or dispersedPhase must be provided"
             << endl
             << abort(FatalIOError);
     }
-    else if (!continuousPhase_.empty() && !dispersedPhase_.empty())
+    else if (!continuousPhases_.empty() && !dispersedPhase_.empty())
     {
         FatalIOErrorInFunction(dict)
             << "Either continuousPhase or dispersedPhase must be provided, "
@@ -76,6 +83,18 @@ Foam::blendingMethods::noBlending::noBlending
 
 Foam::blendingMethods::noBlending::~noBlending()
 {}
+
+
+// * * * * * * * * * * * * Private Member Functions  * * * * * * * * * * * //
+
+Foam::label Foam::blendingMethods::noBlending::rank
+(
+    const word& phaseName
+) const
+{
+    const label i = findIndex(continuousPhases_, phaseName);
+    return i < 0 ? labelMax : i;
+}
 
 
 // * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * * //
@@ -92,9 +111,9 @@ Foam::tmp<Foam::volScalarField> Foam::blendingMethods::noBlending::f1
     (
         "f",
         mesh,
-        continuousPhase_.empty()
+        continuousPhases_.empty()
       ? dimensionedScalar(dimless, phase1.name() == dispersedPhase_)
-      : dimensionedScalar(dimless, phase2.name() == continuousPhase_)
+      : dimensionedScalar(dimless, rank(phase2.name()) < rank(phase1.name()))
     );
 }
 
@@ -108,9 +127,9 @@ Foam::scalar Foam::blendingMethods::noBlending::f1i
 {
     return scalar
     (
-        continuousPhase_.empty()
+        continuousPhases_.empty()
       ? phase1.name() == dispersedPhase_
-      : phase2.name() == continuousPhase_
+      : rank(phase2.name()) < rank(phase1.name())
     );
 }
 
@@ -127,9 +146,9 @@ Foam::tmp<Foam::volScalarField> Foam::blendingMethods::noBlending::f2
     (
         "f",
         mesh,
-        continuousPhase_.empty()
+        continuousPhases_.empty()
       ? dimensionedScalar(dimless, phase2.name() == dispersedPhase_)
-      : dimensionedScalar(dimless, phase1.name() == continuousPhase_)
+      : dimensionedScalar(dimless, rank(phase1.name()) < rank(phase2.name()))
     );
 }
 
@@ -142,9 +161,9 @@ Foam::scalar Foam::blendingMethods::noBlending::f2i
 {
     return scalar
     (
-        continuousPhase_.empty()
+        continuousPhases_.empty()
       ? phase2.name() == dispersedPhase_
-      : phase1.name() == continuousPhase_
+      : rank(phase1.name()) < rank(phase2.name())
     );
 }
 

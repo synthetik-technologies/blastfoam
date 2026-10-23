@@ -1,0 +1,22 @@
+#!/bin/sh
+cd ${0%/*} || exit 1    # run from this directory
+
+# Source tutorial run functions
+. $WM_PROJECT_DIR/bin/tools/RunFunctions
+
+# Usage: Allrun <T0> <p0> <mixture: air | products | productsAir>
+T0=${1:-4000}
+p0=${2:-1e7}
+mix=${3:-productsAir}
+
+python3 $BLAST_DIR/utilities/thermo_fitter/nasa9_species.py \
+    --base $BLAST_DIR/tests/1D_spherical/ChargeCompBAl_1D_spherical_reacting/constant/thermo.compressibleGas \
+    --species O2 N2 CO H2O CO2 NH3 CH4 C2H6 Al H2 O N NO H OH AlO "C(gr)" "Al2O3(s)" \
+    -o constant/thermo.nasa9Gas > log.nasa9_species 2>&1
+
+python3 setup_case.py --T $T0 --p $p0 --mixture $mix > log.setup_case 2>&1
+
+runApplication blockMesh
+runApplication $(getApplication)
+
+# ----------------------------------------------------------------- end-of-file

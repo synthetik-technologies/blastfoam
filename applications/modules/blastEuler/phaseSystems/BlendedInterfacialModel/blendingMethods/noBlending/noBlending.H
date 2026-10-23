@@ -25,6 +25,17 @@ Class
     Foam::blendingMethods::noBlending
 
 Description
+    No blending: in each pair, the model for the phase that is dispersed is
+    used. Either the dispersed phase (dispersedPhase) or the continuous
+    phase is named. The continuous phase can be one phase (continuousPhase)
+    or a list in order of precedence (continuousPhases): in a pair, the
+    phase that comes first in the list is the continuous one, e.g.
+
+        continuousPhases (gas compBAl);
+
+    makes compBAl continuous in the pair (Al, compBAl) and dispersed in
+    (compBAl, gas). A pair with neither phase in the list uses only its
+    unordered model (as with a single continuousPhase).
 
 SourceFiles
     noBlending.C
@@ -53,11 +64,18 @@ class noBlending
 {
     // Private Data
 
-        //- Name of the continuous phase
-        const word continuousPhase_;
+        //- Names of the continuous phases in order of precedence
+        wordList continuousPhases_;
 
         //- Name of the dispersed phase
         const word dispersedPhase_;
+
+
+    // Private Member Functions
+
+        //- Precedence of a phase as the continuous phase (lower first;
+        //  labelMax if not listed)
+        label rank(const word& phaseName) const;
 
 
 public:

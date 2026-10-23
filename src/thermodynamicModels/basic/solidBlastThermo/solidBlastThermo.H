@@ -87,6 +87,13 @@ public:
     //- Initialize models
     virtual void initializeFields();
 
+    //- Pressure [Pa]
+    virtual const volScalarField& p() const
+    {
+        NotImplemented;
+        return rho_;
+    }
+
 
     //- Declare run-time constructor selection table
     declareRunTimeSelectionTable
@@ -177,6 +184,13 @@ public:
             {
                 return blastThermo::rho0();
             }
+
+            //- Update density
+            virtual void updateRho() = 0;
+
+            //- Update density given a pressure field
+            virtual void updateRho(const volScalarField& p)
+            {}
 
             using blastThermo::rho;
 

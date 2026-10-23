@@ -75,6 +75,24 @@ Foam::activationModels::programmedIgnitionActivation::programmedIgnitionActivati
             IOobject::groupName("rho", phaseName)
         )
     ),
+    pName_(dict.lookupOrDefault("pName", phaseName != word::null ? IOobject::groupName("p", phaseName) : word("p"))),
+    p_
+    (
+        mesh.foundObject<volScalarField>(pName_)
+      ? mesh.lookupObject<volScalarField>(pName_)
+      : mesh.lookupObject<volScalarField>("p")
+    ),
+    pMin_("pMin", dimPressure, dict.lookupOrDefault<scalar>("pMin", 1.5e5)),
+    alphaPtr_
+    (
+        phaseName != word::null && mesh.foundObject<volScalarField>(IOobject::groupName("alpha", phaseName))
+      ? &mesh.lookupObject<volScalarField>
+        (
+            IOobject::groupName("alpha", phaseName)
+        )
+      : nullptr
+    ),
+    residualAlpha_(dict.lookupOrDefault<scalar>("residualAlpha", 1e-4)),
     vDet_("vDet", dimVelocity, dict),
     Pcj_("Pcj", dimPressure, dict),
     rho0_
@@ -157,10 +175,28 @@ void Foam::activationModels::programmedIgnitionActivation::correct
 
     forAll(lambda, celli)
     {
-        //- Compression based activation
-        if (model_ == BETA || model_ == PROGRAMMEDBETA)
+        const scalar alphai = alphaPtr_ ? (*alphaPtr_)[celli] : 1.0;
+
+        if (alphai <= residualAlpha_)
         {
-            if (rho_[celli] > rho0_.value())
+            lambda[celli] = 0.0;
+            continue;
+        }
+
+        const cell& c = cells[celli];
+        scalar A = 0.0;
+        forAll(c, facei)
+        {
+            A += magSf[c[facei]];
+        }
+        scalar edgeLength = this->mesh().V()[celli]/A;
+        scalar lambdaProg =
+            max(t.value() - tIgn_[celli], 0.0)
+           *vDet_.value()/(1.5*edgeLength);
+
+        if (model_ == BETA)
+        {
+            if (rho_[celli] > rho0_.value() && p_[celli] > pMin_.value())
             {
                 lambda[celli] = max
                 (
@@ -169,22 +205,24 @@ void Foam::activationModels::programmedIgnitionActivation::correct
                 );
             }
         }
-        //- Position based activation
-        if (model_ == PROGRAMMED || model_ == PROGRAMMEDBETA)
+        else if (model_ == PROGRAMMEDBETA)
         {
-            const cell& c = cells[celli];
-            scalar A = 0.0;
-            forAll(c, facei)
+            if (lambdaProg > 0.0 && rho_[celli] > rho0_.value())
             {
-                A += magSf[c[facei]];
+                lambda[celli] = max
+                (
+                    max(lambda[celli], lambdaProg),
+                    (1.0 - rho0_.value()/rho_[celli])/(1.0 - Vcj_.value())
+                );
             }
-            scalar edgeLength = this->mesh().V()[celli]/A;
-            lambda[celli] = max
-            (
-                max(t.value() - tIgn_[celli], 0.0)
-               *vDet_.value()/(1.5*edgeLength),
-                lambda[celli]
-            );
+            else
+            {
+                lambda[celli] = max(lambda[celli], lambdaProg);
+            }
+        }
+        else if (model_ == PROGRAMMED)
+        {
+            lambda[celli] = max(lambda[celli], lambdaProg);
         }
     }
 }

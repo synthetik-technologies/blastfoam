@@ -37,6 +37,7 @@ Foam::Murnaghan<Specie>::Murnaghan
     rho0_(dict.subDict("equationOfState").lookup<scalar>("rho0")),
     rhoMin_(dict.subDict("equationOfState").lookupOrDefault("rhoMin", 0.0)),
     pRef_(dict.subDict("equationOfState").lookup<scalar>("pRef")),
+    pMax_(dict.subDict("equationOfState").lookupOrDefault<scalar>("pMax", 1e15)),
     K0_(0.0),
     kappa_(0.0),
     K0Prime_(0.0),
@@ -68,7 +69,7 @@ Foam::Murnaghan<Specie>::Murnaghan
 
     if (!dict.subDict("equationOfState").found("rhoMin"))
     {
-        rhoMin_ = 0.9*rho0_;//pow(-pRef_*kappa_*n_ + 1.0, 1.0/n_);
+        rhoMin_ = rho0_*pow(max(-pRef_*kappa_*n_ + 1.0, 1e-4), 1.0/n_);
     }
 }
 
@@ -83,6 +84,7 @@ void Foam::Murnaghan<Specie>::write(Ostream& os) const
     dictionary dict("equationOfState");
     dict.add("rho0", rho0_);
     dict.add("pRef", pRef_);
+    dict.add("pMax", pMax_);
     dict.add("K0", K0_);
     dict.add("kappa", kappa_);
     dict.add("K0Prime", K0Prime_);
