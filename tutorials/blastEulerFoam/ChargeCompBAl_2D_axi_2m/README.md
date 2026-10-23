@@ -55,8 +55,11 @@ up to 71 000 cells): CO and H2 burnout within 1% of 1D, peaks within -3 /
 within 2.5%. From 0.5 ms the fireball surface forms Rayleigh-Taylor fingers
 (about 50 - 60 mm apart), seeded by the mesh, so not mesh-converged. Along
 the axis air runs into the fireball and along the symmetry plane a jet of
-products runs out (inward secondary shock ahead along both; under
-investigation). A run to 2 ms takes about 40 h.
+products runs out (inward secondary shock ahead along both). This is grid-seeded: the mesh
+aligned with the axis turns the flow towards it and the Al accumulates in
+the small axis cells; it converges at first order in the axis column but not
+within about 25 degrees of the axis, so the 0 and 90 degree probes are
+mesh-dependent (report, axis study). A run to 2 ms takes about 40 h.
 
 Run with:
 ./Allrun

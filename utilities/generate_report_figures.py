@@ -20,6 +20,7 @@ import sys
 
 import numpy as np
 import matplotlib
+import matplotlib.ticker
 matplotlib.use("Agg")
 import matplotlib.pyplot as plt
 
@@ -1259,6 +1260,89 @@ def fig_stage5_g2b_mixing():
     print(f"Generated {out}")
 
 
+def fig_stage5_axis_mesh():
+    """Axis study of plan step G2b: the inert spherical case tests/2D_axi/
+    ChargeCompBAl_2D_axi_spherical on a 0.6 m wedge with uniform cells of 8,
+    4 and 2 mm (no AMR), to 0.15 ms (2 mm: 0.1 ms); $G2_RESULTS_DIR/G2b_axis_mesh_study/<size>, with the cell
+    centres): tangential/radial velocity ratio of the gas against the
+    distance from the axis, and the Al volume fraction against the angle,
+    relative to the 30-60 deg mean at the same radius."""
+    d2, _ = g2_dirs()
+    base = os.path.join(os.path.dirname(d2), "G2b_axis_mesh_study")
+    sizes = (("8mm", "8 mm", "lightsteelblue"), ("4mm", "4 mm", "royalblue"),
+             ("2mm", "2 mm", "navy"))
+    for s, _, _ in sizes:
+        if not os.path.isdir(os.path.join(base, s)):
+            raise FileNotFoundError(os.path.join(base, s))
+
+    def load(s, t):
+        f = lambda n: read_field(os.path.join(base, s, t, n))
+        x, y = f("Ccx"), f("Ccy")
+        txt = open(os.path.join(base, s, t, "U.gas")).read()
+        b = txt.split("internalField", 1)[1].split(";", 1)[0]
+        u = np.array([[float(v) for v in m.split()]
+                      for m in re.findall(r"\(([^()]*)\)", b[b.index("(") + 1:])])
+        r = np.hypot(x, y)
+        ur = (u[:, 0]*x + u[:, 1]*y)/r
+        ut = (-u[:, 0]*y + u[:, 1]*x)/r
+        return x, y, r, np.degrees(np.arctan2(y, x)), ut, ur, f("alpha.Al")*np.ones_like(x)
+
+    fig, axs = plt.subplots(1, 3, figsize=(13, 3.9))
+    t = "0.0001"
+    for s, lab, c in sizes:
+        x, y, r, a, ut, ur, al = load(s, t)
+        band = (r > 0.2) & (r < 0.3)
+        h = float(s[:-2])*1e-3
+        xc = np.arange(0.5, 32)*h
+        xc = xc[xc < 0.064]
+        ratio = [np.mean(ut[band & (abs(x - c0) < h/2)])
+                 / np.mean(abs(ur[band & (abs(x - c0) < h/2)])) for c0 in xc]
+        axs[0].plot(xc*1e3, np.array(ratio)*100, "-o", ms=3, color=c, label=lab)
+        band = (r > 0.15) & (r < 0.35)
+        ref = band & (a > 30) & (a < 60)
+        rb = np.arange(0.15, 0.35 + 1e-9, 0.004)
+        dev = np.full(len(x), np.nan)
+        for lo, hi in zip(rb[:-1], rb[1:]):
+            k = (r >= lo) & (r < hi)
+            dev[k] = al[k]/np.mean(al[k & ref]) - 1
+        ac = np.arange(1.5, 90, 3)
+        axs[1].plot(ac, [np.nanmean(dev[band & (abs(a - c0) < 1.5)])*100 for c0 in ac],
+                    "-", color=c, label=lab)
+    axs[0].axhline(0, color="k", lw=0.8)
+    axs[0].set_xlabel("Distance from the axis [mm]")
+    axs[0].set_ylabel("$u_\\theta/|u_r|$ of the gas [%]")
+    axs[0].set_title("(a) 0.1 ms, r = 0.2-0.3 m (< 0: away from the axis)")
+    axs[1].axhline(0, color="k", lw=0.8)
+    axs[1].set_xlabel("Angle from the symmetry plane [$^\\circ$] (90: axis)")
+    axs[1].set_ylabel("Al volume fraction vs 30-60$^\\circ$ [%]")
+    axs[1].set_title("(b) 0.1 ms, r = 0.15-0.35 m")
+
+    # Velocity ratio in the cell column next to the axis against the cell size
+    for t, mk in (("5e-05", "s"), ("0.0001", "o")):
+        hs, vals = [], []
+        for s, _, _ in sizes:
+            x, y, r, a, ut, ur, al = load(s, t)
+            h = float(s[:-2])*1e-3
+            k = (r > 0.1) & (r < 0.3) & (x < h)
+            hs.append(h*1e3)
+            vals.append(-np.mean(ut[k])/np.mean(abs(ur[k]))*100)
+        axs[2].loglog(hs, vals, mk + "-", color="k", label=f"{float(t)*1e6:g} $\\mu$s")
+    hh = np.array([2, 8])
+    axs[2].loglog(hh, 0.45*hh, ":", color="grey", label="first order")
+    axs[2].set_xlabel("Cell size [mm]")
+    axs[2].set_ylabel("$-u_\\theta/|u_r|$, axis column [%]")
+    axs[2].set_title("(c) Axis column, r = 0.1-0.3 m")
+    for axis in (axs[2].xaxis, axs[2].yaxis):
+        axis.set_major_formatter(matplotlib.ticker.FormatStrFormatter("%g"))
+        axis.set_minor_formatter(matplotlib.ticker.NullFormatter())
+    axs[2].set_xticks([2, 4, 8])
+    axs[2].set_yticks([1, 2, 4])
+    for ax in axs:
+        ax.grid(True, which="both")
+        ax.legend()
+    save(fig, "stage5_axis_mesh")
+
+
 FIGURES = {
     "isentropes": fig_isentropes,
     "products_temperature": fig_products_temperature,
@@ -1278,6 +1362,7 @@ FIGURES = {
     "g2_blast": fig_stage5_g2_blast,
     "g2_fields": fig_stage5_g2_fields,
     "g2b_mixing": fig_stage5_g2b_mixing,
+    "axis_mesh": fig_stage5_axis_mesh,
 }
 
 
