@@ -314,6 +314,24 @@ bool Foam::blastChemicalEquilibrium<ThermoType>::solveKKT
         }
     }
 
+    // A non-finite or overflowing system (e.g. from an extreme cell state)
+    // fails the solve, so that the cell is left frozen, instead of trapping
+    // a floating-point exception in the SVD
+    for (label p = 0; p < N; p++)
+    {
+        if (!std::isfinite(x[p]) || mag(x[p]) > 1e100)
+        {
+            return false;
+        }
+        for (label q = 0; q < N; q++)
+        {
+            if (!std::isfinite(M(p, q)) || mag(M(p, q)) > 1e100)
+            {
+                return false;
+            }
+        }
+    }
+
     // Pseudo-inverse: directions not determined by significant species
     // (e.g. the potentials of elements held in a condensed phase, whose gas
     // species are negligible) are given no step. In the scaled system a
