@@ -1,0 +1,129 @@
+/*--------------------------------*- C++ -*----------------------------------*\
+  =========                 |
+  \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox
+   \\    /   O peration     | Website:  https://openfoam.org
+    \\  /    A nd           | Version:  12
+     \\/     M anipulation  |
+\*---------------------------------------------------------------------------*/
+FoamFile
+{
+    format      binary;
+    class       dictionary;
+    location    "constant";
+    object      dynamicMeshDict;
+}
+// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
+
+// Base cells of 16 mm, refined where neighbouring cells differ by more than
+// 20% in density or pressure (shock, products/air contact; not the smooth
+// expansion) or at the Al cloud edge. The finest level follows the cell size
+// of the 1D graded mesh of ChargeCompBAl_1D_spherical_2m at the shock radius
+// (0.5 mm to r = 0.1 m, then 10 mm at 2 m): level 5 (0.5 mm) until 40 us
+// (shock at 0.2 m), 4 (1 mm) to 60 us (the start of the mapped run), 3 (2 mm)
+// to 350 us (0.8 m), 2 (4 mm) to 1.27 ms (1.6 m), then 1 (8 mm). Cells above
+// the current level are coarsened.
+maxLevel        table
+(
+    (0          5.5)
+    (4e-5       5.0)
+    (6e-5       4.0)
+    (3.5e-4     3.0)
+    (1.27e-3    2.0)
+    (1          1.5)
+);
+
+// Level of the products/air mixing layer (3: 2 mm, about the cell size of the
+// 1D graded mesh at the fireball edge)
+mixingLevel     3;
+
+topoChanger
+{
+    libs            ( "libblastFvMeshTopoChangers.so" );
+    type            hexRefiner;
+
+    errorEstimator  multicomponent;
+    errorEstimators
+    (
+        density
+        {
+            errorEstimator      scaledDelta;
+            field               rho;
+            lowerRefineLevel    0.2;
+            unrefineLevel       0.1;
+            maxRefinement       $maxLevel;
+        }
+        pressure
+        {
+            errorEstimator      scaledDelta;
+            field               p;
+            lowerRefineLevel    0.2;
+            unrefineLevel       0.1;
+            maxRefinement       $maxLevel;
+        }
+        Al
+        {
+            errorEstimator      scaledDelta;
+            field               alpha.Al;
+            // Jumps in alpha.Al above 3e-4 (relative to 1e-3)
+            minValue            1e-3;
+            lowerRefineLevel    0.3;
+            unrefineLevel       0.1;
+            maxRefinement       $maxLevel;
+        }
+        mixingLayer
+        {
+            // Products/air mixing layer: ratio of the carbon to the carbon
+            // and nitrogen element mass fractions of the gas, 0.449 in the
+            // products and 0 in air; conserved by the chemistry and not
+            // changed by the Al oxides. Refined between 0.01 and 0.44 to a
+            // fixed level (the 20% jumps of rho and p lose the layer once it
+            // is spread over a few cells)
+            errorEstimator      linearCombination;
+            fields
+            {
+                CO.gas          0.42882;
+                CO2.gas         0.27292;
+                CH4.gas         0.74868;
+                C2H6.gas        0.79890;
+                "C(gr).gas"     1;
+                CH2O.gas        0.40002;
+                CH3.gas         0.79887;
+                CH3O.gas        0.38703;
+                HCO.gas         0.41392;
+            }
+            denominator
+            {
+                CO.gas          0.42882;
+                CO2.gas         0.27292;
+                CH4.gas         0.74868;
+                C2H6.gas        0.79890;
+                "C(gr).gas"     1;
+                CH2O.gas        0.40002;
+                CH3.gas         0.79887;
+                CH3O.gas        0.38703;
+                HCO.gas         0.41392;
+                N2.gas          1;
+                N.gas           1;
+                NH3.gas         0.82244;
+                NO.gas          0.46680;
+            }
+            lowerRefineLevel    0.01;
+            upperRefineLevel    0.44;
+            unrefineLevel       0.005;
+            upperUnrefineLevel  0.445;
+            maxRefinement       $mixingLevel;
+        }
+    );
+
+    refineInterval  1;
+    nBufferLayers   2;
+    dumpLevel       true;
+}
+
+distributor
+{
+    libs            ( "libblastFvMeshDistributors.so" );
+    type            redistributor;
+}
+
+// ************************************************************************* //

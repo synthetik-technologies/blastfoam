@@ -189,6 +189,8 @@ Progress (2026-10-22, G2b): the products/air mixing layer is now refined by a `l
 
 Progress (2026-10-23, axis study): the axis behaviour is grid-seeded. On the inert spherical case on a 0.6 m wedge with uniform cells, the mesh-aligned directions turn the early flow towards the axis and the plane; at the axis the inflow concentrates in the small cells, the pressureless Al accumulates and drag carries the error to the gas (gas/Al tangential velocity 2%/4.4% of the radial on 4 mm cells by 0.15 ms; single-phase 0.4%). Flux, axis cells, buoyancy gradient, particle flux and particle velocity reconstruction are ruled out. The error is first order in the axis column (4.6/2.1/1.1% on 8/4/2 mm) but not converged within about 25° of the axis. The 0°/90° rays are therefore mesh-dependent; G3 needs seeded perturbations above this grid noise.
 
+Progress (2026-10-23, G3a started, plan in `stage5_g3_plan.md`): `tutorials/blastEulerFoam/ChargeCompBAl_2D_axi_cylinder` holds centre-initiated cylinders of the G2 sphere's mass (0.953 kg) with the G2b physics and AMR, `./Allrun <L/D>`. Two fixes were needed for a charge set after `decomposePar`. The programmed burn now recomputes its arrival times after topology changes (the front was 35% ahead at 45°). The products/gas heat transfer is now scaled by the reacted fraction (traces of unreacted explosive at the grazing-detonation surface reached the temperature cap and collapsed the time step). L/D 1 and 4 are running to 1.3 ms.
+
 ### Phase H: Validation (L) — Stage 6
 
 | # | Step | Exit criterion |

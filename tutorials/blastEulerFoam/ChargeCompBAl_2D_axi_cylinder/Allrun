@@ -1,0 +1,43 @@
+#!/bin/sh
+cd ${0%/*} || exit 1    # run from this directory
+
+# Source tutorial run functions
+. $WM_PROJECT_DIR/bin/tools/RunFunctions
+
+# Length/diameter ratio of the charge (argument, default 1). The charge has
+# the volume of the 0.05 m sphere of ChargeCompBAl_2D_axi_2m (0.953 kg).
+LD=${1:-1}
+set -- $(python3 -c "
+import math
+V = 4/3*math.pi*0.05**3
+D = (4*V/(math.pi*$LD))**(1/3)
+print(f'{D/2:.6g} {$LD*D/2:.6g}')
+") || exit 1
+radius=$1
+halfLength=$2
+echo "L/D $LD: radius $radius m, half-length $halfLength m"
+
+# Clean previous results
+rm -rf [1-9]* 0.[0-9]* postProcessing log.* constant/polyMesh dynamicCode processor*
+
+# -- Base mesh and the air fields
+runApplication blockMesh
+for f in 0/*.orig
+do
+    cp "$f" "0/$(basename "$f" .orig)"
+done
+
+# -- Set and refine the charge in parallel (each processor then keeps its
+#    refinement history, which decomposePar does not decompose, so the
+#    charge cells can be coarsened later)
+foamDictionary -entry radius -set "$radius" system/setFieldsDict
+foamDictionary -entry halfLength -set "$halfLength" system/setFieldsDict
+runApplication decomposePar
+runParallel setRefinedFields
+
+touch ChargeCompBAl_2D_axi_cylinder.foam
+
+# -- Run calculation in parallel (system/decomposeParDict)
+runParallel $(getApplication)
+
+# ----------------------------------------------------------------- end-of-file
