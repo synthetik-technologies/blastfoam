@@ -103,17 +103,35 @@ inline Foam::scalar Foam::thermoModel<ThermoType>::T
     }
 
     scalar Tprev = 0.0;
+
+    // Previous evaluation for the secant derivative
+    scalar Tsec = 0.0;
+    scalar Fsec = 0.0;
+
     do
     {
         Tprev = Test;
         Test = Tnew;
-        Tnew =
-            (this->*limit)
-            (
-                Test
-              - ((this->*F)(rho, f, Test) - f)/(this->*dFdT)(rho, f, Test),
-                Test
-            );
+
+        const scalar Fi = (this->*F)(rho, f, Test);
+        scalar dFi = (this->*dFdT)(rho, f, Test);
+
+        // From the third iteration use the secant slope where it is usable:
+        // where the analytic derivative does not match F (e.g. trace gas
+        // compressed towards the covolume limit), Newton converges only
+        // linearly and can exceed the iteration limit
+        if (iter >= 2 && mag(Test - Tsec) > small)
+        {
+            const scalar dFs = (Fi - Fsec)/(Test - Tsec);
+            if (std::isfinite(dFs) && dFs*dFi > 0)
+            {
+                dFi = dFs;
+            }
+        }
+        Tsec = Test;
+        Fsec = Fi;
+
+        Tnew = (this->*limit)(Test - (Fi - f)/dFi, Test);
 
         absError = mag((Tnew - Test));
         relError = absError/max(Tnew, small);
